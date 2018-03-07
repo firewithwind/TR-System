@@ -1,0 +1,60 @@
+{
+    "user": {
+        "id": "string",
+        "name": "string",
+        "phone": "string",
+        "Email": "string",
+        "level": "number",
+        "pwd": "string",
+        "avatar": "string",
+        "laboratory": "string"
+    },
+    "project": {
+        "id": "string",
+        "funding": "number",
+        "description": "string",
+    },
+    "user_pro": {
+        "uid": "string",
+        "pid": "string",
+    },
+    "requisition": {
+        "id": "string",
+        "state": "number",
+        "requester": "string"
+        "startTime": "string(时间戳)",
+        "endTime": "string(时间戳)",
+        "project": "string",
+    },
+    "trip": {
+        "id": "string",
+        "requisition": "string"
+        "way": "number",
+        "occurTime": "string",
+        "changeTime": "string",
+        "destination": "string",
+        "description": "string",
+        "approver": "array"
+    },
+    "reimbursement": {
+        "id": "string",
+        "requisition": "string"
+        "occurTime": "string",
+        "changeTime": "string",
+        "laboratory": "number",
+        "destination": "string"
+        "allMoney": "number",
+        "approver": "string",
+        "fightTime": "string"
+    },
+    "consumption": {
+        "id": "string",
+        "reimbursement": "string",
+        "type": "number",
+        "occurTime": "string",
+        "description": "string",
+        "money": "number",
+        "remarks": "string"
+    },
+
+}
