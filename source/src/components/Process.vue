@@ -114,7 +114,7 @@
     .operater
         display: inline-block
         width: .85rem
-        margin: .1rem
+        margin: .3rem .1rem
         font-size: .14rem
         text-align: center
         div

@@ -22,27 +22,27 @@
         "id": "string",
         "state": "number",
         "requester": "string"
-        "startTime": "string(时间戳)",
-        "endTime": "string(时间戳)",
-        "project": "string",
+        "occurTime": "string",
+        "changeTime": "string",
+        "project": "string"
     },
     "trip": {
         "id": "string",
         "requisition": "string"
         "way": "number",
-        "occurTime": "string",
-        "changeTime": "string",
+        "startTime": "string(时间戳)",
+        "endTime": "string(时间戳)",
         "destination": "string",
         "description": "string",
-        "approver": "array"
+        "approver": "string",
+        "dataRange": "string"
     },
     "reimbursement": {
         "id": "string",
         "requisition": "string"
         "occurTime": "string",
-        "changeTime": "string",
         "laboratory": "number",
-        "destination": "string"
+        "destination": "string",
         "allMoney": "number",
         "approver": "string",
         "fightTime": "string"
@@ -56,5 +56,9 @@
         "money": "number",
         "remarks": "string"
     },
-
+    "invoice": {
+        "id": "string",
+        "rid": "string",
+        "pic": "string"
+    }
 }

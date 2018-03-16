@@ -1,28 +1,25 @@
 <template>
-    <div class="create">
-        <el-form v-model="requestion" label-width="0.8rem">
-            <el-form-item label="申请人">
-                <el-input v-model="requestion.user" disabled>{{requestion.user}}</el-input>
-            </el-form-item>
-            <el-form-item label="实验室">
-                <el-input v-model="requestion.laboratory" disabled>{{requestion.laboratory}}</el-input>
-            </el-form-item>
-        </el-form>
+    <div class="requestion">
+        <requestion :requestion="requestion"></requestion>
     </div>
 </template>
 <script>
+import Requestion from '@/components/Requestion'
 export default {
+    components: {
+        Requestion
+    },
     data() {
         return {
             requestion: {
                 user: 'liulianxing',
-                laboratory: '网络安全实验室'
+                laboratory: '虚拟化技术研究室',
+                state: 0
             }
         }
     }
 }
 </script>
 <style lang="stylus" scoped>
-.create
-    font-size: .18rem
+
 </style>

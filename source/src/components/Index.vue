@@ -51,6 +51,9 @@
                 </div>
             </el-main>
         </el-container>
+        <div class="footer">
+            <span>哈尔滨工业大学(威海)</span><span style="margin-left: .2rem">虚拟化技术研究室</span>
+        </div>
     </div>
 </template>
 
@@ -141,4 +144,12 @@ export default {
                         font-size: .16rem
                         padding: .76rem 0
                         text-align: center
+    .footer
+        position: fixed
+        bottom: 0
+        height: .6rem
+        width: 100%
+        background-color: rgb(84, 92, 100)
+        line-height: .6rem
+        color: #fff
 </style>

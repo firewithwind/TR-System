@@ -6,6 +6,7 @@ import Create from '@/components/Create'
 import ReqUndone from '@/components/ReqUndone'
 import ReqUnremark from '@/components/ReqUnremark'
 import ReqFind from '@/components/ReqFind'
+import Detail from '@/components/Detail'
 
 Vue.use(Router)
 
@@ -35,6 +36,10 @@ export default new Router({
                 {
                     path: 'find',
                     component: ReqFind
+                },
+                {
+                    path: 'detail',
+                    component: Detail
                 }
             ]
         }
