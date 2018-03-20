@@ -9,6 +9,8 @@ export default {
     components: {
         Requestion
     },
+    created() {
+    },
     data() {
         return {
             requestion: {

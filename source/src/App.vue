@@ -16,7 +16,8 @@
             <el-badge is-dot>
                 <img class="logo" src="./assets/logo.png">
             </el-badge>
-            <a href="http://www.baidu.com">个人名称</a>
+            <a href="user">{{user.name}}</a>
+            <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
         </el-menu-item>
     </el-menu>
     <router-view/>
@@ -28,7 +29,28 @@ export default {
   name: 'App',
     data() {
         return {
-            activeIndex: 'index'
+            activeIndex: 'index',
+            user: {}
+        }
+    },
+    created() {
+        let id = localStorage.getItem('user')
+        if (!!id) {
+            this.$request
+                .post('/test/getUserInfor')
+                .send({
+                    id: id
+                })
+                .set('accept', 'json')
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                        return
+                    }
+                    this.user = res.body
+                })
+        } else {
+            localStorage.setItem('user', '00000001')
         }
     }
 }
