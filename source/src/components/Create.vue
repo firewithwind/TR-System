@@ -1,6 +1,6 @@
 <template>
     <div class="requestion">
-        <requestion :requestion="requestion"></requestion>
+        <requestion :requestion="requestion" @createRequestion="createRequestion"></requestion>
     </div>
 </template>
 <script>
@@ -9,15 +9,71 @@ export default {
     components: {
         Requestion
     },
-    created() {
-    },
     data() {
         return {
             requestion: {
-                user: 'liulianxing',
-                laboratory: '虚拟化技术研究室',
+                user: '',
+                laboratory: '',
                 state: 0
             }
+        }
+    },
+    mounted() {
+        this.setRequestion()
+    },
+    methods: {
+        setRequestion() {
+            if (!!this.$store.state.user.name) {
+                this.requestion = {
+                    user: this.$store.state.user && this.$store.state.user.name,
+                    laboratory: this.$store.state.user && this.$store.state.user.laboratory,
+                    state: 0
+                }
+            } else {
+                let id = localStorage.getItem('user')
+                if (!!id) {
+                    this.$request
+                        .post('/test/getUserInfor')
+                        .send({
+                            id: id
+                        })
+                        .set('accept', 'json')
+                        .end((err, res) => {
+                            if (!!err) {
+                                console.log(err)
+                                return
+                            }
+                            this.requestion = {
+                                user: this.$store.state.user && this.$store.state.user.name,
+                                laboratory: this.$store.state.user && this.$store.state.user.laboratory,
+                                state: 0
+                            }
+                            this.$store.commit('setUser', res.body)
+                        })
+                } else {
+                    localStorage.setItem('user', '00000001')
+                }
+            }
+        },
+        createRequestion() {
+            // if(this.requestion.)
+            console.log(111)
+            this.$request
+                .post('/test/createRequestion')
+                .send({
+                    requestion: {...this.requestion},
+                    trip: {
+                        ...this.trip
+                    }
+                })
+                .set('accept', 'json')
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                        return
+                    }
+                    console.log(res)
+                })
         }
     }
 }

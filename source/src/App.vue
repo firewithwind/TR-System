@@ -20,7 +20,7 @@
             <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
         </el-menu-item>
     </el-menu>
-    <router-view/>
+    <router-view />
   </div>
 </template>
 
@@ -48,6 +48,8 @@ export default {
                         return
                     }
                     this.user = res.body
+                    console.log(111)
+                    this.$store.commit('setUser', res.body)
                 })
         } else {
             localStorage.setItem('user', '00000001')

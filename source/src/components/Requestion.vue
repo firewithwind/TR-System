@@ -291,7 +291,6 @@ export default {
         formatTime,
         formatDate,
         addNewReim() {
-            console.log(this.newReim)
             this.reims.push(this.newReim)
             this.newReim = {
                 type: 30,
@@ -329,7 +328,7 @@ export default {
             this.newReim.seat = ''
         },
         submit() {
-            console.log(this.requestion)
+            this.commit('createRequestion')
         },
         remark() {
             console.log(this.requestion.id, this.remarkResult, this.remarkReason)
