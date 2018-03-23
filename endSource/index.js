@@ -43,15 +43,15 @@ app.use(async (ctx) => {
             } else if (!param.destination) {
                 ctx.throw(400, 'bad request body of destination')
             } else {
-                select = 'insert into requestion values(1,"'
+                select = 'insert into requestion values(NULL, 1,'
+                    + param.project + ',"'
                     + param.requester + '","'
-                    + param.project + '","'
                     + Date.now() + '","'
                     + param.startTime + '","'
                     + param.endTime + '",'
                     + param.way + ',"'
                     + param.destination + '","'
-                    + param.description + '")'
+                    + param.description + '", NULL, NULL)'
             }
             break
         default:
