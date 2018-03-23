@@ -316,7 +316,6 @@ export default {
             this.newReim.seat = ''
         },
         submit() {
-            console.log(this.requestion)
             if (!this.requestion.user) {
                 this.$message({
                     message: '发生错误，请刷新页面',

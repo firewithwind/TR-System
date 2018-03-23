@@ -48,7 +48,6 @@ export default {
                         return
                     }
                     this.user = res.body
-                    console.log(111)
                     this.$store.commit('setUser', res.body)
                 })
         } else {

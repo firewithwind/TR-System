@@ -20,11 +20,18 @@ app.use(koaBody())
 
 app.use(async (ctx) => {
     let param = ctx.request.body
-    let select = null
+    let select = null,
+        result = null
     switch(ctx.url) {
         case '/getUserInfor':
             if (!!param.id) {
                 select = 'select * from user where id = ' + param.id
+                result = await querySQL(select)
+                if(!!result.state) {
+                    ctx.body = result.body[0]
+                } else {
+                    ctx.body = result.msg
+                }
             } else {
                 ctx.throw(400, 'bad userID in request');
             }
@@ -52,16 +59,18 @@ app.use(async (ctx) => {
                     + param.way + ',"'
                     + param.destination + '","'
                     + param.description + '", NULL, NULL)'
+                result = await querySQL(select)
+                if(!!result.state) {
+                    ctx.body = {
+                        id: result.body.insertId
+                    }
+                } else {
+                    ctx.body = result.msg
+                }
             }
             break
         default:
             ctx.throw(400, 'Not Found')
-    }
-    let result = await querySQL(select)
-    if(!!result.state) {
-        ctx.body = result.body[0]
-    } else {
-        ctx.body = result.msg
     }
 })
 

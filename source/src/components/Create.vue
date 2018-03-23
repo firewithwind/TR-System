@@ -76,7 +76,13 @@ export default {
                         console.log(err)
                         return
                     }
-                    console.log(res)
+                    if (res.status >= 200 && res.status < 300) {
+                        this.$message({
+                            type: 'success',
+                            message: '新建申请单成功'
+                        })
+                        this.$router.push('/reimbursement/index/detail?id=' + res.body.id)
+                    }
                 })
         }
     }
