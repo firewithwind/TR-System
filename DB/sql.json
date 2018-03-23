@@ -24,18 +24,13 @@
         "requester": "string"
         "occurTime": "string",
         "changeTime": "string",
-        "project": "string"
-    },
-    "trip": {
-        "id": "string",
-        "requisition": "string"
+        "project": "string",
         "way": "number",
         "startTime": "string(时间戳)",
         "endTime": "string(时间戳)",
         "destination": "string",
         "description": "string",
-        "approver": "string",
-        "dataRange": "string"
+        "approver": "string"
     },
     "reimbursement": {
         "id": "string",

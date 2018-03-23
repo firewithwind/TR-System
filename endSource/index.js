@@ -18,26 +18,53 @@ connection.connect(function(err) {
 
 app.use(koaBody())
 
-app.use(async (ctx, next) => {
-    if('/getUserInfor' === ctx.url) {
-        await next()
+app.use(async (ctx) => {
+    let param = ctx.request.body
+    let select = null
+    switch(ctx.url) {
+        case '/getUserInfor':
+            if (!!param.id) {
+                select = 'select * from user where id = ' + param.id
+            } else {
+                ctx.throw(400, 'bad userID in request');
+            }
+            break
+        case '/createRequestion':
+            if (!param.user) {
+                ctx.throw(400, 'bad request body of user')
+            } else if (!param.startTime) {
+                ctx.throw(400, 'bad request body of startTime')
+            } else if (!param.endTime) {
+                ctx.throw(400, 'bad request body of endTime')
+            } else if (!param.requester) {
+                ctx.throw(400, 'bad request body of endTime')
+            } else if (!param.way) {
+                ctx.throw(400, 'bad request body of way')
+            } else if (!param.destination) {
+                ctx.throw(400, 'bad request body of destination')
+            } else {
+                select = 'insert into requestion values(1,"'
+                    + param.requester + '","'
+                    + param.project + '","'
+                    + Date.now() + '","'
+                    + param.startTime + '","'
+                    + param.endTime + '",'
+                    + param.way + ',"'
+                    + param.destination + '","'
+                    + param.description + '")'
+            }
+            break
+        default:
+            ctx.throw(400, 'Not Found')
+    }
+    let result = await querySQL(select)
+    if(!!result.state) {
+        ctx.body = result.body[0]
+    } else {
+        ctx.body = result.msg
     }
 })
 
-app.use(async (ctx) => {
-    let param = ctx.request.body
-    if(!!param.id) {
-        let select = 'select * from user where id = ' + param.id
-        let result = await querySQL(select)
-        if(!!result.state) {
-            ctx.body = result.body[0]
-        } else {
-            ctx.body = result.msg
-        }
-    } else {
-        ctx.throw(400, 'bad userID in request');
-    }
-})
 
 function querySQL(select) {
     return new Promise((res, rej) => {

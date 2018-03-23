@@ -23,11 +23,11 @@
             </el-form-item>
         </el-form>
         <p class="split">出差任务申请</p>
-        <el-form class="trip-wrapper" v-model="trip" label-width="0.8rem" :inline="inline">
+        <el-form class="trip-wrapper" v-model="requestion" label-width="0.8rem" :inline="inline">
             <el-form-item label="出差时间:">
                 <el-date-picker
                     v-if="requestion.state===0"
-                    v-model="trip.dataRange"
+                    v-model="requestion.dataRange"
                     type="daterange"
                     align="right"
                     unlink-panels
@@ -35,28 +35,28 @@
                     start-placeholder="开始日期"
                     end-placeholder="结束日期">
                 </el-date-picker>
-                <span v-else>{{formatDate(trip.startTime)}} 至 {{formatDate(trip.endTime)}}</span>
+                <span v-else>{{formatDate(requestion.startTime)}} 至 {{formatDate(requestion.endTime)}}</span>
             </el-form-item>
             <el-form-item label="交通工具:">
-                <el-select v-if="requestion.state===0" v-model="trip.way">
+                <el-select v-if="requestion.state===0" v-model="requestion.way">
                     <el-option
                         v-for="item in ways"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"></el-option>
                 </el-select>
-                <span v-else>{{feeTypesEnum[trip.way]}}</span>
+                <span v-else>{{feeTypesEnum[requestion.way]}}</span>
             </el-form-item>
             <el-form-item label="目的地:">
-                <el-input v-if="requestion.state===0" v-model="trip.destination" placeholder="输入目的地"></el-input>
-                <span v-else>{{trip.destination}}</span>
+                <el-input v-if="requestion.state===0" v-model="requestion.destination" placeholder="输入目的地"></el-input>
+                <span v-else>{{requestion.destination}}</span>
             </el-form-item>
             <el-form-item label="出差事由:">
-                <el-input v-if="requestion.state===0" v-model="trip.description" placeholder="输入出差事由"></el-input>
-                <span v-else>{{trip.description}}</span>
+                <el-input v-if="requestion.state===0" v-model="requestion.description" placeholder="输入出差事由"></el-input>
+                <span v-else>{{requestion.description}}</span>
             </el-form-item>
             <el-form-item v-if="requestion.state>=2" label="审批人:">
-                <span v-for="item in trip.approver" :key="item">{{item}}&nbsp;&nbsp;&nbsp;</span>
+                <span v-for="item in requestion.approver" :key="item">{{item}}&nbsp;&nbsp;&nbsp;</span>
             </el-form-item>
         </el-form>
         <div v-if="requestion.state>=2">
@@ -232,18 +232,6 @@ export default {
             type: Object,
             required: true
         },
-        trip: {
-            type: Object,
-            default: function() {
-                return {
-                    dataRange: [],
-                    way: 30,
-                    destination: '',
-                    description: '',
-                    approver: []
-                }
-            }
-        },
         isRemark: {
             type: Boolean,
             default: false
@@ -328,7 +316,30 @@ export default {
             this.newReim.seat = ''
         },
         submit() {
-            this.commit('createRequestion')
+            console.log(this.requestion)
+            if (!this.requestion.user) {
+                this.$message({
+                    message: '发生错误，请刷新页面',
+                    type: 'error'
+                })
+            } else if (!this.requestion.dataRange) {
+                this.$message({
+                    message: '请选择出差时间',
+                    type: 'error'
+                })
+            } else if (!this.requestion.way) {
+                this.$message({
+                    message: '请选择交通工具',
+                    type: 'error'
+                })
+            } else if (!this.requestion.destination) {
+                this.$message({
+                    message: '请输入出差的目的地',
+                    type: 'error'
+                })
+            } else {
+                this.$emit('operateRequestion', this.requestion, this.reims)
+            }
         },
         remark() {
             console.log(this.requestion.id, this.remarkResult, this.remarkReason)

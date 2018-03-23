@@ -1,6 +1,6 @@
 <template>
     <div class="requestion">
-        <requestion :requestion="requestion" @createRequestion="createRequestion"></requestion>
+        <requestion :requestion="requestion" @operateRequestion="createRequestion"></requestion>
     </div>
 </template>
 <script>
@@ -14,7 +14,12 @@ export default {
             requestion: {
                 user: '',
                 laboratory: '',
-                state: 0
+                state: 0,
+                dataRange: [],
+                way: 30,
+                destination: '',
+                description: '',
+                approver: []
             }
         }
     },
@@ -55,16 +60,15 @@ export default {
                 }
             }
         },
-        createRequestion() {
-            // if(this.requestion.)
-            console.log(111)
+        createRequestion(requestion, trip) {
             this.$request
                 .post('/test/createRequestion')
                 .send({
-                    requestion: {...this.requestion},
-                    trip: {
-                        ...this.trip
-                    }
+                    ...requestion,
+                    requester: this.$store.state.user.id,
+                    startTime: new Date(requestion.dataRange[0]).getTime(),
+                    endTime: new Date(requestion.dataRange[1]).getTime(),
+                    dataRange: null
                 })
                 .set('accept', 'json')
                 .end((err, res) => {
