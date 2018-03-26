@@ -4,7 +4,7 @@
         "name": "string",
         "phone": "string",
         "Email": "string",
-        "level": "number",
+        "level": "number", 0普通 1主任 2财务 3管理员
         "pwd": "string",
         "avatar": "string",
         "laboratory": "string"

@@ -80,37 +80,37 @@ export const feeTypesEnum = {
 }
 export const steps = [
     {
-        state: 0,
+        state: 1,
         title: '任务待审批',
         desc: '任务审批完成后，您可以正常出差'
     },
     {
-        state: 1,
+        state: 2,
         title: '任务审批通过',
         desc: ''
     },
     {
-        state: 2,
+        state: 3,
         title: '报销待审批',
         desc: '您的报销申请已提交，请耐心等待'
     },
     {
-        state: 3,
+        state: 4,
         title: '报销审批通过',
         desc: '您的报销申请已通过，请在规定时间内打印粘贴联并上交发票'
     },
     {
-        state: 4,
+        state: 5,
         title: '已完成',
         desc: '财务人员已经收票'
     }
 ]
 export const stateEnum = {
-    0: '任务待审批',
-    1: '任务审批通过',
-    2: '报销待审批',
-    3: '报销审批通过',
-    4: '已完成'
+    1: '任务待审批',
+    2: '任务审批通过',
+    3: '报销待审批',
+    4: '报销审批通过',
+    5: '已完成'
 }
 export const seat = {
     30: [

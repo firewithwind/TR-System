@@ -5,7 +5,7 @@
         </el-steps>
         <el-form class="requestion-wrapper" v-model="requestion" label-width="0.8rem" :inline="inline">
             <el-form-item label="申请人:">
-                {{requestion.user}}
+                {{requestion.name}}
             </el-form-item>
             <el-form-item label="实验室:">
                 {{requestion.laboratory}}
@@ -59,7 +59,7 @@
                 <span v-for="item in requestion.approver" :key="item">{{item}}&nbsp;&nbsp;&nbsp;</span>
             </el-form-item>
         </el-form>
-        <div v-if="requestion.state>=2">
+        <div v-if="requestion.state>1">
             <p class="split">单据报销申请 <span v-if="requestion.state===2&&!isRemark" class="addReim" @click="dialog1Visible = true">添加条目</span></p>
             <el-table
                 class="reimbursement-wrapper"
@@ -219,7 +219,8 @@
         <el-dialog :visible.sync="dialogPicture">
             <img width="100%" :src="dialogImageUrl" alt="">
         </el-dialog>
-        <el-button v-if="!isRemark" type="primary" class="submit" @click="submit">提交申请</el-button>
+        <el-button v-if="requestion.state<2&&!isRemark" type="primary" class="submit" @click="submit(0)">撤销</el-button>
+        <el-button v-if="requestion.state>=2&&!isRemark" type="primary" class="submit" @click="submit(1)">提交申请</el-button>
         <el-button v-if="isRemark" type="primary" class="submit" @click="dialog2Visible=true">审批</el-button>
     </div>
 </template>
@@ -231,6 +232,12 @@ export default {
         requestion: {
             type: Object,
             required: true
+        },
+        reims: {
+            type: Array,
+            default: () => {
+                return []
+            }
         },
         isRemark: {
             type: Boolean,
@@ -254,7 +261,6 @@ export default {
                     value: 1
                 }
             ],
-            reims: [],
             newReim: {
                 type: 30,
                 startAddress: '',
@@ -279,7 +285,7 @@ export default {
         formatTime,
         formatDate,
         addNewReim() {
-            this.reims.push(this.newReim)
+            this.$emit('operateRequestion', this.requestion, this.newReim, 1)
             this.newReim = {
                 type: 30,
                 startAddress: '',
@@ -315,33 +321,12 @@ export default {
         changeFeeType(value) {
             this.newReim.seat = ''
         },
-        submit() {
-            if (!this.requestion.user) {
-                this.$message({
-                    message: '发生错误，请刷新页面',
-                    type: 'error'
-                })
-            } else if (!this.requestion.dataRange) {
-                this.$message({
-                    message: '请选择出差时间',
-                    type: 'error'
-                })
-            } else if (!this.requestion.way) {
-                this.$message({
-                    message: '请选择交通工具',
-                    type: 'error'
-                })
-            } else if (!this.requestion.destination) {
-                this.$message({
-                    message: '请输入出差的目的地',
-                    type: 'error'
-                })
-            } else {
-                this.$emit('operateRequestion', this.requestion, this.reims)
-            }
+        submit(ope) {
+            this.$emit('operateRequestion', this.requestion, undefined, ope)
         },
         remark() {
             console.log(this.requestion.id, this.remarkResult, this.remarkReason)
+            this.$emit('operateRequestion', this.requestion, undefined, 2)
             this.dialog2Visible = false
         },
         handleRemove(file, fileList) {

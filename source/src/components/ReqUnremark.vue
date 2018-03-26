@@ -10,7 +10,7 @@
                 label="编号">
             </el-table-column>
             <el-table-column
-                prop="requester"
+                prop="name"
                 label="申请人">
             </el-table-column>
             <el-table-column
@@ -49,76 +49,30 @@ export default {
     data() {
         return {
             stateEnum,
-            requestions: [
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 2
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                },
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    requester: 'liulianxing',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                }
-            ]
+            requestions: []
         }
+    },
+    created() {
+        this.getUnremarkRequestion()
     },
     methods: {
         formatDate,
+        getUnremarkRequestion() {
+            this.$request
+                .post('/test/getUnremarkRequestion')
+                .send({
+                    id: this.$store.state.user.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.requestions = []
+                        console.log(err)
+                    } else {
+                        this.requestions = res.body
+                        console.log(res.body)
+                    }
+                })
+        },
         goForDetail(id) {
             this.$router.push('/reimbursement/index/detail?id=' + id + '&isRemark=1')
         }

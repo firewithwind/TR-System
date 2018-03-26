@@ -46,19 +46,29 @@ export default {
     data() {
         return {
             stateEnum,
-            requestions: [
-                {
-                    id: '12121212',
-                    project: '重点项目',
-                    occurTime: '1521100215662',
-                    description: '参加重点adasdasdasda',
-                    state: 1
-                }
-            ]
+            requestions: []
         }
+    },
+    created() {
+        this.getUndoneRequestion()
     },
     methods: {
         formatDate,
+        getUndoneRequestion() {
+            this.$request
+                .post('/test/getUndoneRequestion')
+                .send({
+                    id: this.$store.state.user.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.requestions = []
+                        console.log(err)
+                    } else {
+                        this.requestions = res.body
+                    }
+                })
+        },
         goForDetail(id) {
             this.$router.push('/reimbursement/index/detail?id=' + id)
         }

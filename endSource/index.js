@@ -69,6 +69,92 @@ app.use(async (ctx) => {
                 }
             }
             break
+        case '/getRequestionDetail':
+            if (!!param.id) {
+                select = `select *
+                        from user u join requestion r on r.requester = u.id
+                        where r.id=${param.id}`
+                result = await querySQL(select)
+                if(!!result.state) {
+                    ctx.body = result.body[0]
+                } else {
+                    ctx.body = result.msg
+                }
+            } else {
+                ctx.throw(400, 'bad requestion ID in request');
+            }
+            break
+        case '/getUndoneRequestion':
+            if (!!param.id) {
+                select = `select *
+                        from requestion
+                        where requester=${param.id} and state<4`
+                result = await querySQL(select)
+                if(!!result.state) {
+                    ctx.body = result.body
+                } else {
+                    ctx.body = result.msg
+                }
+            } else {
+                ctx.throw(400, 'bad userID in request');
+            }
+            break
+        case '/getUnremarkRequestion':
+            if (!!param.id) {
+                select = `select level
+                        from user
+                        where id=${param.id}`
+                var queryRes = await querySQL(select)
+                if(!!queryRes.state) {
+                    var level = queryRes.body[0].level
+                } else {
+                    ctx.throw(400, 'no this user')
+                }
+                if(level == 1) {
+                    select = `select *
+                            from user u join requestion r on r.requester=u.id
+                            where state < 2`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.body = result.msg
+                    }
+                } else if (level == 2) {
+                    select = `select *
+                            from user u join requestion r on r.requester=u.id
+                            where state > 2 and state < 4`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.body = result.msg
+                    }
+                } else {
+                    ctx.throw(400, 'you have no acception for remarking')
+                }
+            } else {
+                ctx.throw(400, 'bad userID in request');
+            }
+            break
+        case '/deleteRequestion':
+            if(param.id && param.uid) {
+                select = `delete
+                        from requestion
+                        where id=${param.id} and requester=${param.uid}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        type: 0,
+                        msg: 'success'
+                    }
+                } else {
+                    ctx.body =result.msg
+                }
+            } else {
+                ctx.throw(400, 'bad params in request');
+            }
+            break
         default:
             ctx.throw(400, 'Not Found')
     }
