@@ -1,14 +1,17 @@
 <template>
     <div class="detail">
-        <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" :reims="reims"></requestion>
+        <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark" :reims="reims"></requestion>
+        <!-- <reim-wrapper :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark" :reims="reims"></reim-wrapper> -->
     </div>
 </template>
 <script>
 import Requestion from '@/components/Requestion'
+import ReimWrapper from '@/components/ReimWrapper'
 import {query} from '@/utils'
 export default {
     components: {
-        Requestion
+        Requestion,
+        ReimWrapper
     },
     data() {
         return {
@@ -39,8 +42,20 @@ export default {
                         this.requestion = res.body
                     }
                 })
+            this.$request
+                .post('/test/getReimbursements')
+                .send({
+                    id: id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.reims = res.body
+                    }
+                })
         },
-        dealOperate(requestion, rem, ope) {
+        dealOperate(rem, ope) {
             if (ope === 0) {
                 this.$confirm('请求撤销后无法恢复，您确定要撤销吗', '提示', {
                     confirmButtonText: '确定',
@@ -66,23 +81,34 @@ export default {
                         })
                 })
             } else if (ope === 1) {
-                if (this.$store.state.user.id === this.requestion.requester) {
+                if (this.$store.state.user.id === +this.requestion.requester) {
                     if (!rem) {
                         this.$message({
                             type: 'error',
                             message: '请添加报销项'
                         })
                     } else {
+                        rem.startDate = new Date(rem.startDate).getTime()
+                        rem.startTime = new Date(rem.startTime).getTime()
+                        rem.endDate = new Date(rem.startDate).getTime()
+                        rem.endTime = new Date(rem.endTime).getTime()
                         this.$request
                             .post('/test/addReimbursement')
                             .send({
-                                rem: rem
+                                requestion: this.requestion.id,
+                                uid: this.$store.state.user.id,
+                                ...rem
                             })
                             .end((err, res) => {
                                 if (!!err) {
                                     console.log(err)
                                 } else {
+                                    this.$message({
+                                        type: 'success',
+                                        message: '添加成功'
+                                    })
                                     this.reims.push(rem)
+                                    this.requestion.state = 3
                                 }
                             })
                     }
@@ -93,6 +119,28 @@ export default {
                     })
                 }
             }
+        },
+        remark(ope, resion) {
+            this.$request
+                .post('/test/approveRequestion')
+                .send({
+                    id: this.requestion.id,
+                    uid: this.$store.state.user.id,
+                    state: this.requestion.state,
+                    operate: ope,
+                    resion: resion
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.$message({
+                            type: 'success',
+                            message: '已审批'
+                        })
+                        this.getRequestionDetail(this.requestion.id)
+                    }
+                })
         }
     }
 }

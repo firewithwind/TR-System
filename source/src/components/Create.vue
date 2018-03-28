@@ -12,6 +12,7 @@ export default {
     data() {
         return {
             requestion: {
+                user: '',
                 name: '',
                 laboratory: '',
                 state: 0,
@@ -30,6 +31,7 @@ export default {
         setRequestion() {
             if (!!this.$store.state.user.name) {
                 this.requestion = {
+                    user: this.$store.state.user && this.$store.state.user.id,
                     name: this.$store.state.user && this.$store.state.user.name,
                     laboratory: this.$store.state.user && this.$store.state.user.laboratory,
                     state: 0
@@ -49,6 +51,7 @@ export default {
                                 return
                             }
                             this.requestion = {
+                                user: this.$store.state.user && this.$store.state.user.id,
                                 name: this.$store.state.user && this.$store.state.user.name,
                                 laboratory: this.$store.state.user && this.$store.state.user.laboratory,
                                 state: 0
@@ -85,10 +88,10 @@ export default {
                 this.$request
                     .post('/test/createRequestion')
                     .send({
-                        ...requestion,
+                        ...this.requestion,
                         requester: this.$store.state.user.id,
-                        startTime: new Date(requestion.dataRange[0]).getTime(),
-                        endTime: new Date(requestion.dataRange[1]).getTime(),
+                        startTime: new Date(this.requestion.dataRange[0]).getTime(),
+                        endTime: new Date(this.requestion.dataRange[1]).getTime(),
                         dataRange: null
                     })
                     .set('accept', 'json')

@@ -69,7 +69,6 @@ export default {
                         console.log(err)
                     } else {
                         this.requestions = res.body
-                        console.log(res.body)
                     }
                 })
         },

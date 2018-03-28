@@ -5,7 +5,7 @@ function tofixed(data) {
 }
 export function formatTime(time) {
     if (!time) return ''
-    let date = new Date(time)
+    let date = new Date(+time)
     let hours = date.getHours()
     let minute = date.getMinutes()
     let second = date.getSeconds()

@@ -33,7 +33,7 @@
                 label="操作">
                 <template slot-scope="scope">
                     <el-button type="text" @click="goForDetail(scope.row.id)">查看详情</el-button>
-                    <el-button type="text" style="color: rgb(255, 208, 75)">删除</el-button>
+                    <el-button v-if="scope.row.state<=2" type="text" style="color: rgb(255, 208, 75)" @click="deleteRequestion(scope.row.id, scope.$index)">撤销</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -71,6 +71,31 @@ export default {
         },
         goForDetail(id) {
             this.$router.push('/reimbursement/index/detail?id=' + id)
+        },
+        deleteRequestion(id, index) {
+            this.$confirm('请求撤销后无法恢复，您确定要撤销吗', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.$request
+                        .post('/test/deleteRequestion')
+                        .send({
+                            uid: this.$store.state.user.id,
+                            id: id
+                        })
+                        .end((err, res) => {
+                            if (!!err) {
+                                console.log(err)
+                            } else {
+                                this.requestions.splice(index, 1)
+                                this.$message({
+                                    type: 'success',
+                                    message: '已撤销!'
+                                })
+                            }
+                        })
+                })
         }
     }
 }

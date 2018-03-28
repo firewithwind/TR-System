@@ -55,5 +55,12 @@
         "id": "string",
         "rid": "string",
         "pic": "string"
+    },
+    "message": {
+        "id": "string",
+        "uid": "string"
+        "data": "string",
+        "state": "Enum", 0未读 1已读
+        "occurTime": "string"
     }
 }
