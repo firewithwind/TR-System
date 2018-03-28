@@ -1,6 +1,6 @@
 <template>
     <div class="create">
-        <el-steps v-if="requestion.state!=-0" class="state-wrapper" :active="requestion.state" align-center>
+        <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
             <el-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.desc"></el-step>
         </el-steps>
         <el-form class="requestion-wrapper" v-model="requestion" label-width="0.8rem" :inline="inline">
@@ -20,6 +20,9 @@
                     </el-option>
                 </el-select>
                 <span v-else>{{requestion.project}}</span>
+            </el-form-item>
+            <el-form-item v-if="requestion.state!=0" label="申请时间:">
+                {{formatDate(requestion.occurTime)}}
             </el-form-item>
         </el-form>
         <p class="split">出差任务申请</p>
@@ -162,10 +165,6 @@ export default {
         font-size: .16rem
         color: #409EFF
         margin: .05rem 0 .2rem .05rem
-        .addReim
-            float: right
-            margin-right: .1rem
-            cursor: pointer
     .el-form-item
         min-width: 30%
     .state-wrapper
@@ -175,8 +174,6 @@ export default {
         border-bottom: 1px solid #F2F6FC
     .trip-wrapper
         border-bottom: 1px solid #F2F6FC
-    .reimbursement-wrapper
-        margin-bottom: 0rem
     .submit
         margin-top: .3rem
 </style>

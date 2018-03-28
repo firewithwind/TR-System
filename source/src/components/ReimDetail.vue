@@ -1,0 +1,189 @@
+<template>
+    <div class="create-reim">
+        <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
+            <el-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.desc"></el-step>
+        </el-steps>
+        <el-form v-if="!!requestion" class="requestion-wrapper" v-model="requestion" label-width="0.8rem" :inline="true">
+            <el-form-item label="申请人:">
+                {{requestion.name}}
+            </el-form-item>
+            <el-form-item label="实验室:">
+                {{requestion.laboratory}}
+            </el-form-item>
+            <el-form-item label="所属项目:">
+                <span>{{requestion.project}}</span>
+            </el-form-item>
+            <el-form-item label="申请时间:">
+                <span>{{formatDate(requestion.occurTime)}}</span>
+            </el-form-item>
+        </el-form>
+        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim"></reim-wrapper>
+        <el-dialog
+          :visible.sync="dialogVisible"
+          width="30%"
+          :before-close="remarkClose">
+            <template>
+                <el-radio v-model="remarkResult" :label="0">通过</el-radio>
+                <el-radio v-model="remarkResult" :label="1">驳回</el-radio>
+            </template>
+            <el-input
+                v-if="!!remarkResult"
+                type="textarea"
+                autosize
+                placeholder="请输入驳回原因"
+                v-model="remarkReason">
+            </el-input>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="remark">确 定</el-button>
+            </span>
+        </el-dialog>
+        <div class="operate-wrapper">
+            <el-button v-if="(requestion.state>=3&&requestion.state<4)&&isRemark" type="primary" class="submit" @click="dialogVisible=true">审批</el-button>
+        </div>
+    </div>
+</template>
+<script>
+import {formatDate, query} from '@/utils'
+import ReimWrapper from '@/components/ReimWrapper'
+import {steps} from '@/dataMap'
+export default {
+    components: {
+        ReimWrapper
+    },
+    data() {
+        return {
+            steps,
+            select: '',
+            opts: [],
+            requestion: {},
+            reims: [],
+            isRemark: false,
+            dialogVisible: false,
+            remarkResult: 0,
+            remarkReason: ''
+        }
+    },
+    created() {
+        let step = location.href.split('?')
+        let param = query(step[1])
+        if (!!param.isRemark) {
+            this.isRemark = true
+        }
+        this.getRequestionDetail(param.id)
+    },
+    methods: {
+        formatDate,
+        remarkClose() {
+            this.dialogVisible = false
+        },
+        remark() {
+            this.$request
+                .post('/test/approveRequestion')
+                .send({
+                    id: this.requestion.id,
+                    uid: this.$store.state.user.id,
+                    state: this.requestion.state,
+                    operate: this.remarkResult,
+                    reason: this.reason
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.$message({
+                            type: 'success',
+                            message: '已审批'
+                        })
+                        this.getRequestionDetail(this.requestion.id)
+                    }
+                })
+            this.dialogVisible = false
+        },
+        getRequestionDetail(id) {
+            this.$request
+                .post('/test/getRequestionDetail')
+                .send({
+                    id: id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.requestion = res.body
+                    }
+                })
+            this.$request
+                .post('/test/getReimbursements')
+                .send({
+                    id: id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.reims = res.body
+                    }
+                })
+        },
+        selectReq(val) {
+            this.requestion = this.opts[val]
+        },
+        addNewReim(rem) {
+            if (this.$store.state.user.id === +this.requestion.requester) {
+                if (!rem) {
+                    this.$message({
+                        type: 'error',
+                        message: '请添加报销项'
+                    })
+                } else {
+                    rem.startDate = new Date(rem.startDate).getTime()
+                    rem.startTime = new Date(rem.startTime).getTime()
+                    rem.endDate = new Date(rem.startDate).getTime()
+                    rem.endTime = new Date(rem.endTime).getTime()
+                    this.$request
+                        .post('/test/addReimbursement')
+                        .send({
+                            requestion: this.requestion.id,
+                            uid: this.$store.state.user.id,
+                            ...rem
+                        })
+                        .end((err, res) => {
+                            if (!!err) {
+                                console.log(err)
+                            } else {
+                                this.$message({
+                                    type: 'success',
+                                    message: '添加成功'
+                                })
+                                this.reims.push(rem)
+                            }
+                        })
+                }
+            } else {
+                this.$message({
+                    type: 'error',
+                    message: '系统错误'
+                })
+            }
+        }
+    }
+}
+</script>
+<style lang="stylus">
+.create-reim
+    text-align: left
+    .state-wrapper
+        margin-top: .3rem
+        margin-bottom: .5rem
+    .requestion-wrapper
+        border-bottom: 1px solid #F2F6FC
+    .label
+        font-size: .14rem
+    .el-form
+        font-size: .14rem
+        .el-form-item
+            min-width: 30%
+    .operate-wrapper
+        margin-top: .2rem
+</style>

@@ -9,7 +9,7 @@
       text-color="#fff"
       active-text-color="#ffd04b">
         <el-menu-item class="main-page" index="/index">差旅报销</el-menu-item>
-        <el-menu-item index="/reimbursement/index/create">差旅报销</el-menu-item>
+        <el-menu-item index="/reimbursement/index/createreq">差旅报销</el-menu-item>
         <el-menu-item index="/project">项目管理</el-menu-item>
         <el-menu-item index="/statistics">数据统计</el-menu-item>
         <el-menu-item class="user-info" index="/userInfor">

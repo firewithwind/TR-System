@@ -2,10 +2,15 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Index from '@/components/Index'
 import Reimbursement from '@/components/Reimbursement'
-import Create from '@/components/Create'
+import CreateReq from '@/components/CreateReq'
+import CreateReim from '@/components/CreateReim'
 import ReqUndone from '@/components/ReqUndone'
 import ReqUnremark from '@/components/ReqUnremark'
 import ReqFind from '@/components/ReqFind'
+import ReqDetail from '@/components/ReqDetail'
+import ReimUndone from '@/components/ReimUndone'
+import ReimUnremark from '@/components/ReimUnremark'
+import ReimDetail from '@/components/ReimDetail'
 import Detail from '@/components/Detail'
 
 Vue.use(Router)
@@ -22,20 +27,40 @@ export default new Router({
             component: Reimbursement,
             children: [
                 {
-                    path: 'create',
-                    component: Create
+                    path: 'createreq',
+                    component: CreateReq
                 },
                 {
-                    path: 'undone',
+                    path: 'createreim',
+                    component: CreateReim
+                },
+                {
+                    path: 'requndone',
                     component: ReqUndone
                 },
                 {
-                    path: 'unremark',
+                    path: 'requnremark',
                     component: ReqUnremark
+                },
+                {
+                    path: 'reimundone',
+                    component: ReimUndone
+                },
+                {
+                    path: 'reimunremark',
+                    component: ReimUnremark
                 },
                 {
                     path: 'find',
                     component: ReqFind
+                },
+                {
+                    path: 'reqdetail',
+                    component: ReqDetail
+                },
+                {
+                    path: 'reimdetail',
+                    component: ReimDetail
                 },
                 {
                     path: 'detail',

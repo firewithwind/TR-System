@@ -73,7 +73,7 @@ export default {
                 })
         },
         goForDetail(id) {
-            this.$router.push('/reimbursement/index/detail?id=' + id + '&isRemark=1')
+            this.$router.push('/reimbursement/index/reqdetail?id=' + id + '&isRemark=1')
         }
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="requestion">
+    <div class="create-req">
         <requestion :requestion="requestion" @operateRequestion="createRequestion"></requestion>
     </div>
 </template>
@@ -105,7 +105,7 @@ export default {
                                 type: 'success',
                                 message: '新建申请单成功'
                             })
-                            this.$router.push('/reimbursement/index/detail?id=' + res.body.id)
+                            this.$router.push('/reimbursement/index/reqdetail?id=' + res.body.id)
                         }
                     })
             }

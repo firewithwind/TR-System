@@ -6,12 +6,26 @@
                     :collapse="false"
                     :router="true"
                     default-active="create">
-                    <el-menu-item index="create">
-                        <svg class="icon" aria-hidden="true">
-                            <use xlink:href="#icon-xinjian"></use>
-                        </svg>
-                        <span slot="title">新建申请</span>
-                    </el-menu-item>
+                    <el-submenu index="1">
+                        <template slot="title">
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-xinjian"></use>
+                            </svg>
+                            <span slot="title">新建申请</span>
+                        </template>
+                        <el-menu-item index="createreq">
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-xinjian"></use>
+                            </svg>
+                            <span slot="title">新建出差申请</span>
+                        </el-menu-item>
+                        <el-menu-item index="createreim">
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-xinjian"></use>
+                            </svg>
+                            <span slot="title">新建报销申请</span>
+                        </el-menu-item>
+                    </el-submenu>
                     <el-submenu index="2">
                         <template slot="title">
                             <svg class="icon" aria-hidden="true">
@@ -19,17 +33,29 @@
                             </svg>
                             <span>我的待办</span>
                         </template>
-                        <el-menu-item index="undone">
+                        <el-menu-item index="requndone">
                             <svg class="icon" aria-hidden="true">
                                 <use xlink:href="#icon-order1"></use>
                             </svg>
                             <span>未完成申请</span>
                         </el-menu-item>
-                        <el-menu-item index="unremark">
+                        <el-menu-item index="reimundone">
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-feiyongbaoxiaodan"></use>
+                            </svg>
+                            <span>未完成报销</span>
+                        </el-menu-item>
+                        <el-menu-item v-if="$store.state.user.level===1" index="requnremark">
                             <svg class="icon" aria-hidden="true">
                                 <use xlink:href="#icon-dengdaishenpi"></use>
                             </svg>
                             <span>待审批申请</span>
+                        </el-menu-item>
+                        <el-menu-item v-if="$store.state.user.level===2" index="reimunremark">
+                            <svg class="icon" aria-hidden="true">
+                                <use xlink:href="#icon-dengdaishenpi"></use>
+                            </svg>
+                            <span>待审批报销</span>
                         </el-menu-item>
                     </el-submenu>
                     <el-menu-item index="find">

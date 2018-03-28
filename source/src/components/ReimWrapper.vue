@@ -1,7 +1,7 @@
 <template>
     <div class="reimwrapper">
         <div v-if="requestion.state>1">
-            <p class="split">单据报销申请 <span v-if="requestion.state>=2&&requestion.state<=3&&!isRemark" class="addReim" @click="showDialog1Visible">添加条目</span></p>
+            <p class="split">单据报销申请 <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark" class="addReim" @click="showDialog1Visible">添加条目</span></p>
             <el-table
                 class="reimbursement-wrapper"
                 :data="reims"
@@ -78,8 +78,7 @@
         <el-dialog
             title="新增报销事项"
             :visible.sync="dialog1Visible"
-            width="50%"
-            :before-close="handleClose">
+            width="50%">
             <el-form v-model="newReim" label-width="0.8rem">
                 <el-form-item label="费用类型">
                     <el-select v-model="newReim.type" @change="changeFeeType">
@@ -201,7 +200,7 @@ export default {
         formatTime,
         formatDate,
         addNewReim() {
-            this.$emit('operateRequestion', this.newReim, 1)
+            this.$emit('addNewReim', this.newReim)
             this.dialog1Visible = false
         },
         handleRemove(file, fileList) {
@@ -236,5 +235,13 @@ export default {
 }
 </script>
 <style lang="stylus">
-
+.reimwrapper
+    .split
+        font-size: .16rem
+        color: #409EFF
+        margin: .05rem 0 .2rem .05rem
+        .addReim
+            float: right
+            margin-right: .1rem
+            cursor: pointer
 </style>

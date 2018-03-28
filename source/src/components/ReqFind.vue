@@ -1,20 +1,37 @@
 <template>
     <div class="find">
         <el-form :model="param" label-width=".8rem" :inline="true">
+            <el-form-item label="申请编号">
+                <el-input v-model="param.id" placeholder="请输入申请单的ID"></el-input>
+            </el-form-item>
             <el-form-item label="用户">
-                <el-input v-model="param.name"></el-input>
+                <el-input v-model="param.name" placeholder="请输入用户名称或ID"></el-input>
             </el-form-item>
             <el-form-item label="请求状态">
-                <el-input v-model="param.state"></el-input>
-            </el-form-item>
-            <el-form-item label="创建时间">
-                <el-input v-model="param.occurTime"></el-input>
+                <el-select v-model="param.state">
+                    <el-option v-for="opt in steps" :key="opt.state" :value="opt.state" :label="opt.title"></el-option>
+                </el-select>
             </el-form-item>
             <el-form-item label="所属项目">
-                <el-input v-model="param.project"></el-input>
+                <el-select v-model="param.project">
+                    <el-option label="重点项目" value="1">
+                    </el-option>
+                </el-select>
             </el-form-item>
-            <el-button type="primary">查询</el-button>
+            <el-form-item label="创建时间">
+                <el-date-picker
+                    v-model="daterange"
+                    type="daterange"
+                    align="right"
+                    unlink-panels
+                    range-separator="至"
+                    start-placeholder="查询开始日期"
+                    end-placeholder="查询结束日期">
+                </el-date-picker>
+            </el-form-item>
+            <el-button class="find" type="primary" @click="getFindRequestion">查询</el-button>
         </el-form>
+        <p class="split">提示：将默认搜索用户自己的所有申请单</p>
         <el-table :data="requestions">
             <el-table-column
                 type="index"
@@ -65,15 +82,37 @@
 </template>
 <script>
 import {formatDate} from '@/utils'
+import {stateEnum, steps} from '@/dataMap'
 export default {
     data() {
         return {
+            stateEnum,
+            steps,
             param: {},
-            requestions: []
+            requestions: [],
+            daterange: []
         }
     },
     methods: {
-        formatDate
+        formatDate,
+        getFindRequestion() {
+            if (!!this.daterange.length) {
+                this.param.startDate = formatDate(this.daterange[0])
+                this.param.endDate = formatDate(this.daterange[1])
+            } else {
+                this.param.startDate = this.param.endDate = ''
+            }
+            this.$request
+                .post('/test/getFindRequestion')
+                .send(this.param)
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.requestions = res.body
+                    }
+                })
+        }
     }
 }
 </script>
@@ -81,8 +120,15 @@ export default {
 .find
     text-align: left
     .el-form-item
-        width: 30%
+        min-width: 30%
     .page-wrapper
         margin-top: .15rem
         text-align: right
+    .split
+        margin: .1rem 0
+        font-size: .12rem
+        text-indent: .1rem
+        color: #E6A23C
+    .find
+        margin-left: .2rem
 </style>

@@ -88,7 +88,22 @@ app.use(async(ctx) => {
             if (!!param.id) {
                 select = `select *
                         from requestion
-                        where requester=${param.id} and state<4`
+                        where requester=${param.id} and state<2`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = result.body
+                } else {
+                    ctx.body = result.msg
+                }
+            } else {
+                ctx.throw(400, 'bad userID in request');
+            }
+            break
+        case '/getUndoneReimbursement':
+            if (!!param.id) {
+                select = `select *
+                        from requestion
+                        where requester=${param.id} and state>=3 and state<5`
                 result = await querySQL(select)
                 if (!!result.state) {
                     ctx.body = result.body
@@ -123,7 +138,7 @@ app.use(async(ctx) => {
                 } else if (level == 2) {
                     select = `select *
                             from user u join requestion r on r.requester=u.id
-                            where state > 2 and state < 4`
+                            where state > 2 and state < 5`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -165,18 +180,20 @@ app.use(async(ctx) => {
                     ext.throw(400, 'no this user')
                 }
                 if ((level === 1 && param.state < 2) || (level === 2 && param.state >= 3 && param.state < 4)) {
-                    select = `update requestion
-                            set state=state+1, approver=${param.uid} where id=${param.id}`
-                    result = await querySQL(select)
-                    if (!!result.state) {
-                        ctx.body = {
-                            type: 0,
-                            msg: 'success'
-                        }
-                    } else {
-                        ctx.body = {
-                            type: 1,
-                            msg: result.msg
+                    if (param.operate === 0) {
+                        select = `update requestion
+                                set state=state+1, approver=${param.uid} where id=${param.id}`
+                        result = await querySQL(select)
+                        if (!!result.state) {
+                            ctx.body = {
+                                type: 0,
+                                msg: 'success'
+                            }
+                        } else {
+                            ctx.body = {
+                                type: 1,
+                                msg: result.msg
+                            }
                         }
                     }
                 } else {
@@ -235,6 +252,37 @@ app.use(async(ctx) => {
                 }
             } else {
                 ctx.throw(400, 'bad requestion id in param')
+            }
+            break
+        case '/getCreatableReim':
+            if (!!param.id ) {
+                select = `select *
+                        from user u join requestion r on u.id=r.requester
+                        where r.requester=${param.id} and state>=2 and state <3`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = result.body
+                } else {
+                    ctx.body = {
+                        type: 0,
+                        msg: result.msg
+                    }
+                }
+            } else {
+                ctx.throw(400, 'bad userID in param')
+            }
+            break
+        case '/getFindRequestion':
+            let findQuery = setQuery(param)
+            select = `select * from requestion where ${findQuery}`
+            result = await querySQL(select)
+            if (!!result.state) {
+                ctx.body = result.body
+            } else {
+                ctx.body = {
+                    type: 0,
+                    msg: result.msg
+                }
             }
             break
         default:
@@ -303,6 +351,17 @@ function querySQL(select) {
             });
         })
     }
+}
+
+function setQuery(param) {
+    let result = ''
+    for (let key in param) {
+        if (!!param[key] || param[key]===0) {
+            result += key + '=' + param[key] + ' and '
+        }
+    }
+    result = result.slice(0, -5)
+    return result
 }
 
 app.listen(3000)
