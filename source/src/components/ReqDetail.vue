@@ -3,7 +3,7 @@
         <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
             <el-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.desc"></el-step>
         </el-steps>
-        <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark" :reims="reims"></requestion>
+        <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark"></requestion>
         <!-- <reim-wrapper :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark" :reims="reims"></reim-wrapper> -->
     </div>
 </template>
@@ -19,7 +19,6 @@ export default {
     data() {
         return {
             requestion: {},
-            reims: [],
             isRemark: false
         }
     },
@@ -45,18 +44,18 @@ export default {
                         this.requestion = res.body
                     }
                 })
-            this.$request
-                .post('/test/getReimbursements')
-                .send({
-                    id: id
-                })
-                .end((err, res) => {
-                    if (!!err) {
-                        console.log(err)
-                    } else {
-                        this.reims = res.body
-                    }
-                })
+            // this.$request
+            //     .post('/test/getReimbursements')
+            //     .send({
+            //         id: id
+            //     })
+            //     .end((err, res) => {
+            //         if (!!err) {
+            //             console.log(err)
+            //         } else {
+            //             this.reims = res.body
+            //         }
+            //     })
         },
         dealOperate(rem, ope) {
             if (ope === 0) {
@@ -83,44 +82,11 @@ export default {
                             }
                         })
                 })
-            } else if (ope === 1) {
-                if (this.$store.state.user.id === +this.requestion.requester) {
-                    if (!rem) {
-                        this.$message({
-                            type: 'error',
-                            message: '请添加报销项'
-                        })
-                    } else {
-                        rem.startDate = new Date(rem.startDate).getTime()
-                        rem.startTime = new Date(rem.startTime).getTime()
-                        rem.endDate = new Date(rem.startDate).getTime()
-                        rem.endTime = new Date(rem.endTime).getTime()
-                        this.$request
-                            .post('/test/addReimbursement')
-                            .send({
-                                requestion: this.requestion.id,
-                                uid: this.$store.state.user.id,
-                                ...rem
-                            })
-                            .end((err, res) => {
-                                if (!!err) {
-                                    console.log(err)
-                                } else {
-                                    this.$message({
-                                        type: 'success',
-                                        message: '添加成功'
-                                    })
-                                    this.reims.push(rem)
-                                    this.requestion.state = 3
-                                }
-                            })
-                    }
-                } else {
-                    this.$message({
-                        type: 'error',
-                        message: '系统错误'
-                    })
-                }
+            } else {
+                this.$message({
+                    type: 'error',
+                    message: '系统错误'
+                })
             }
         },
         remark(ope, reason) {

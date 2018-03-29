@@ -17,7 +17,7 @@
                 <span>{{formatDate(requestion.occurTime)}}</span>
             </el-form-item>
         </el-form>
-        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim"></reim-wrapper>
+        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim" @deleteReim="deleteReim"></reim-wrapper>
         <el-dialog
           :visible.sync="dialogVisible"
           width="30%"
@@ -166,6 +166,30 @@ export default {
                     message: '系统错误'
                 })
             }
+        },
+        deleteReim(id, index) {
+            this.$confirm('将会删除报销条目, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.$request
+                    .post('/test/deleteReim')
+                    .send({
+                        id: id
+                    })
+                    .end((err, res) => {
+                        if (!!err) {
+                            console.log(err)
+                        } else {
+                            this.reims.splice(index, 1)
+                            this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            })
+                        }
+                    })
+            })
         }
     }
 }

@@ -2,6 +2,8 @@ const koa = require('koa');
 const koaBody = require('koa-body')
 const mysql = require('mysql')
 const config = require('./config')
+const path = require('path')
+const { uploadFile } = require('./uploadFile.js')
 
 const app = new koa();
 
@@ -273,16 +275,93 @@ app.use(async(ctx) => {
             }
             break
         case '/getFindRequestion':
-            let findQuery = setQuery(param)
-            select = `select * from requestion where ${findQuery}`
+            let limit = param.limit
+            let user = param.user
+            let key = 0
+            select = 'select * from user u join requestion r on r.requester=u.id where '
+            if (!!param.id) {
+                select += `r.id=${param.id} and`
+                key = 1
+            }
+            if (!!param.name) {
+                if (!isNaN(param.name)) {
+                    select += ` (u.id=${param.name} or u.name="${param.name}") and`
+                } else {
+                    select += ` u.name="${param.name}" and`
+                }
+                key = 1
+            }
+            if (!!param.state) {
+                select += ` r.state=${param.state} and`
+                key = 1
+            }
+            if (!!param.project) {
+                select += ` r.project=${param.project} and`
+                key = 1
+            }
+            if (!!param.startDate) {
+                select += ` occurTime >= "${param.startDate}" and occurTime <= "${param.endDate} and"`
+                key = 1
+            }
+            if (!key) {
+                select += `r.requester=${user}`
+            } else {
+                select = select.slice(0, -4)
+            }
+            select += ` limit ${limit.offset}, ${limit.count}`
             result = await querySQL(select)
-            if (!!result.state) {
-                ctx.body = result.body
+            let sitem = await querySQL(select)
+            if (!!sitem.state && !!result.state) {
+                ctx.body = {
+                    results: result.body,
+                    acount: sitem.body[0] ? sitem.body[0]['count(*)'] : 0
+                }
             } else {
                 ctx.body = {
                     type: 0,
-                    msg: result.msg
+                    msg: result.msg || sitem.msg
                 }
+            }
+            break
+        case '/deleteReim':
+            if (!!param.id) {
+                select = `delete from reimbursement where id = ${param.id}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        type: 1,
+                        msg: 'success'
+                    }
+                } else {
+                    ctx.body = {
+                        type: 0,
+                        msg: result.msg
+                    }
+                }
+            } else {
+                ctx.throw(400, 'bad reimbursement id in param')
+            }
+            break
+        case '/uploadInvoice':
+            let serverFilePath = path.join( __dirname, 'invoice')
+            // 上传文件事件
+            if (!!param.requestion) {
+                result = await uploadFile( ctx, {
+                    fileType: 'album',
+                    path: serverFilePath
+                })
+                select = `insert into invoice values(NULL, ${param.requestion}, "${result.data.pictureUrl}")`
+                result.body.create = await querySQL(select)
+                if (!!result.body.create.state) {
+                    ctx.body = result
+                } else {
+                    ctx.body = {
+                        type: 0,
+                        msg: result.body.create.msg
+                    }
+                }
+            } else {
+                ctx.throw(400, 'bad requestion id in param')
             }
             break
         default:
@@ -356,7 +435,7 @@ function querySQL(select) {
 function setQuery(param) {
     let result = ''
     for (let key in param) {
-        if (!!param[key] || param[key]===0) {
+        if ((!!param[key] || param[key]===0) && key != "startDate" && key != "endDate") {
             result += key + '=' + param[key] + ' and '
         }
     }

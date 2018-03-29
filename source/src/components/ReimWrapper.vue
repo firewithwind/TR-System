@@ -61,14 +61,21 @@
                     prop="money"
                     label="金额">
                 </el-table-column>
+                <el-table-column
+                    v-if="requestion.state>=2&&requestion.state<4&&!isRemark"
+                    label="操作">
+                    <template slot-scope="scope">
+                        <el-button type="text" style="color: rgb(255, 208, 75)" @click="deleteReim(scope.row.id, scope.$index)">删除</el-button>
+                    </template>
+                </el-table-column>
             </el-table>
             <div v-if="requestion.state>=2&&requestion.state<=3&&!isRemark">
                 <p class="split">上传发票</p>
                 <el-upload
-                    :http-request="uploadInvoice"
-                    action=""
+                    action="/test/uploadInvoice"
                     list-type="picture-card"
-                    accept="image/*, *.pdf"
+                    accept="image/*"
+                    :data="uploadData"
                     :on-preview="handlePictureCardPreview"
                     :on-remove="handleRemove">
                     <i class="el-icon-plus"></i>
@@ -193,7 +200,13 @@ export default {
             dialog1Visible: false,
             dialog2Visible: false,
             dialogImageUrl: '',
-            dialogPicture: false
+            dialogPicture: false,
+            uploadData: {}
+        }
+    },
+    created() {
+        this.uploadData = {
+            requestion: this.requestion.id,
         }
     },
     methods: {
@@ -209,9 +222,6 @@ export default {
         handlePictureCardPreview(file) {
             this.dialogImageUrl = file.url
             this.dialogPicture = true
-        },
-        uploadInvoice(arg) {
-            // console.log(arg)
         },
         showDialog1Visible() {
             this.newReim = {
@@ -230,12 +240,16 @@ export default {
         },
         changeFeeType(value) {
             this.newReim.seat = ''
+        },
+        deleteReim(id, index) {
+            this.$emit('deleteReim', id, index)
         }
     }
 }
 </script>
 <style lang="stylus">
 .reimwrapper
+    text-align: left
     .split
         font-size: .16rem
         color: #409EFF

@@ -75,7 +75,7 @@
         <div class="page-wrapper">
             <el-pagination
             layout="prev, pager, next"
-            :total="requestions.length">
+            :total="acount">
             </el-pagination>
         </div>
     </div>
@@ -90,28 +90,47 @@ export default {
             steps,
             param: {},
             requestions: [],
-            daterange: []
+            daterange: [],
+            limit: {
+                offset: 0,
+                count: 10
+            },
+            acount: 0
         }
     },
     methods: {
         formatDate,
         getFindRequestion() {
             if (!!this.daterange.length) {
-                this.param.startDate = formatDate(this.daterange[0])
-                this.param.endDate = formatDate(this.daterange[1])
+                this.param.startDate = new Date(this.daterange[0]).getTime() + ''
+                this.param.endDate = new Date(this.daterange[1]).getTime() + ''
             } else {
                 this.param.startDate = this.param.endDate = ''
             }
             this.$request
                 .post('/test/getFindRequestion')
-                .send(this.param)
+                .send({
+                    ...this.param,
+                    user: this.$store.state.user.id,
+                    limit: this.limit
+                })
                 .end((err, res) => {
                     if (!!err) {
                         console.log(err)
                     } else {
-                        this.requestions = res.body
+                        this.requestions = res.body.results
+                        this.acount = res.body.acount
+                        if (res.body.acount === 0) {
+                            this.$message({
+                                type: 'warning',
+                                message: '没有查询到对应的申请单'
+                            })
+                        }
                     }
                 })
+        },
+        goForDetail(id) {
+            this.$router.push('/reimbursement/index/detail?id=' + id)
         }
     }
 }
