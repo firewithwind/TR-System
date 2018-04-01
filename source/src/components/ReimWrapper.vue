@@ -71,11 +71,21 @@
             </el-table>
             <div v-if="requestion.state>=2&&requestion.state<=3&&!isRemark">
                 <p class="split">上传发票</p>
+                <li v-for="pic in pics" :key="pic.id" class="picture-content">
+                    <img :src="pic.url" alt="" class="el-upload-list__item-thumbnail">
+                    <span class="picture-operate">
+                        <span class="icon picture-preview" @click="handlePictureCardPreview(pic)">
+                            <i class="el-icon-zoom-in"></i>
+                        </span>
+                        <span class="icon picture-delete" @click="handleRemove(pic)">
+                            <i class="el-icon-delete"></i>
+                        </span>
+                    </span>
+                </li>
                 <el-upload
-                    action="/test/uploadInvoice"
+                    :action="'/test/uploadInvoice?requestion=' + requestion.id"
                     list-type="picture-card"
                     accept="image/*"
-                    :data="uploadData"
                     :on-preview="handlePictureCardPreview"
                     :on-remove="handleRemove">
                     <i class="el-icon-plus"></i>
@@ -163,6 +173,12 @@ export default {
                 return []
             }
         },
+        pics: {
+            type: Array,
+            default: () => {
+                return []
+            }
+        },
         isRemark: {
             type: Boolean,
             default: false
@@ -200,13 +216,7 @@ export default {
             dialog1Visible: false,
             dialog2Visible: false,
             dialogImageUrl: '',
-            dialogPicture: false,
-            uploadData: {}
-        }
-    },
-    created() {
-        this.uploadData = {
-            requestion: this.requestion.id,
+            dialogPicture: false
         }
     },
     methods: {
@@ -258,4 +268,41 @@ export default {
             float: right
             margin-right: .1rem
             cursor: pointer
+    .picture-content
+        position: relative
+        width: 1.48rem
+        height: 1.48rem
+        border: 1px solid #c0ccda
+        border-radius: .06rem
+        box-sizing: border-box
+        float: left
+        margin-right: .1rem
+        margin-bottom: .1rem
+        img
+            width: 100%
+            height: 100%
+        .picture-operate
+            position: absolute
+            width: 100%
+            height: 100%
+            line-height: 1.2rem
+            left: 0
+            top: 0
+            cursor: default
+            text-align: center
+            color: #fff
+            opacity: 0
+            font-size: .2rem
+            background-color: rgba(0,0,0,.5)
+            -webkit-transition: opacity .3s
+            transition: opacity .3s
+            .icon
+                display: none
+                cursor: pointer
+                &.picture-preview
+                    margin-right: .1rem
+            &:hover
+                opacity: 0.96
+                .icon
+                    display: inline
 </style>

@@ -66,7 +66,7 @@ function uploadFile(ctx, options) {
                 result.success = true
                 result.message = '文件上传成功'
                 result.data = {
-                    pictureUrl: `//${ctx.host}/invoice/${fileName}`
+                    pictureUrl: `invoice/${fileName}`
                 }
                 resolve(result)
             })

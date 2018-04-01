@@ -4,6 +4,8 @@ const mysql = require('mysql')
 const config = require('./config')
 const path = require('path')
 const { uploadFile } = require('./uploadFile.js')
+const fs = require('fs')
+const qs = require('querystring')
 
 const app = new koa();
 
@@ -24,8 +26,8 @@ app.use(async(ctx) => {
     let param = ctx.request.body
     let select = null,
         result = null
-    switch (ctx.url) {
-        case '/getUserInfor':
+    switch (true) {
+        case /\/getUserInfor/.test(ctx.url):
             if (!!param.id) {
                 select = 'select * from user where id = ' + param.id
                 result = await querySQL(select)
@@ -38,7 +40,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad userID in request');
             }
             break
-        case '/createRequestion':
+        case /\/createRequestion/.test(ctx.url):
             if (!param.user) {
                 ctx.throw(400, 'bad request body of user')
             } else if (!param.startTime) {
@@ -71,7 +73,7 @@ app.use(async(ctx) => {
                 }
             }
             break
-        case '/getRequestionDetail':
+        case /\/getRequestionDetail/.test(ctx.url):
             if (!!param.id) {
                 select = `select *
                         from user u join requestion r on r.requester = u.id
@@ -86,7 +88,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad requestion ID in request');
             }
             break
-        case '/getUndoneRequestion':
+        case /\/getUndoneRequestion/.test(ctx.url):
             if (!!param.id) {
                 select = `select *
                         from requestion
@@ -101,7 +103,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad userID in request');
             }
             break
-        case '/getUndoneReimbursement':
+        case /\/getUndoneReimbursement/.test(ctx.url):
             if (!!param.id) {
                 select = `select *
                         from requestion
@@ -116,7 +118,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad userID in request');
             }
             break
-        case '/getUnremarkRequestion':
+        case /\/getUnremarkRequestion/.test(ctx.url):
             if (!!param.id) {
                 select = `select level
                         from user
@@ -154,7 +156,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad userID in request');
             }
             break
-        case '/deleteRequestion':
+        case /\/deleteRequestion/.test(ctx.url):
             if (param.id && param.uid) {
                 select = `delete
                         from requestion
@@ -172,7 +174,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad params in request');
             }
             break
-        case '/approveRequestion':
+        case /\/approveRequestion/.test(ctx.url):
             if (!param.id || !param.ope) {
                 select = `select level from user where id=${param.uid}`
                 var queryRes = await querySQL(select)
@@ -205,7 +207,7 @@ app.use(async(ctx) => {
                 ext.throw(400, 'bad param in requestion')
             }
             break
-        case '/addReimbursement':
+        case /\/addReimbursement/.test(ctx.url):
             if (!!param.requestion) {
                 select = [`insert
                         into reimbursement
@@ -240,7 +242,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad param in requestion')
             }
             break
-        case '/getReimbursements':
+        case /\/getReimbursements/.test(ctx.url):
             if (!!param.id) {
                 select = `select * from reimbursement where requestion=${param.id}`
                 result = await querySQL(select)
@@ -256,7 +258,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad requestion id in param')
             }
             break
-        case '/getCreatableReim':
+        case /\/getCreatableReim/.test(ctx.url):
             if (!!param.id ) {
                 select = `select *
                         from user u join requestion r on u.id=r.requester
@@ -274,7 +276,7 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad userID in param')
             }
             break
-        case '/getFindRequestion':
+        case /\/getFindRequestion/.test(ctx.url):
             let limit = param.limit
             let user = param.user
             let key = 0
@@ -323,7 +325,7 @@ app.use(async(ctx) => {
                 }
             }
             break
-        case '/deleteReim':
+        case /\/deleteReim/.test(ctx.url):
             if (!!param.id) {
                 select = `delete from reimbursement where id = ${param.id}`
                 result = await querySQL(select)
@@ -342,22 +344,45 @@ app.use(async(ctx) => {
                 ctx.throw(400, 'bad reimbursement id in param')
             }
             break
-        case '/uploadInvoice':
+        case /\/uploadInvoice\?requestion=[/m/M]*/.test(ctx.url):
             let serverFilePath = path.join( __dirname, 'invoice')
             // 上传文件事件
-            if (!!param.requestion) {
+            let query = qs.parse(ctx.url.split('?')[1])
+            if (!!query.requestion) {
                 result = await uploadFile( ctx, {
                     fileType: 'album',
                     path: serverFilePath
                 })
-                select = `insert into invoice values(NULL, ${param.requestion}, "${result.data.pictureUrl}")`
-                result.body.create = await querySQL(select)
-                if (!!result.body.create.state) {
-                    ctx.body = result
+                if (!!result.data.pictureUrl) {
+                    select = `insert into invoice values(NULL, ${query.requestion}, "${ctx.host}/${result.data.pictureUrl}")`
+                    result.data.create = await querySQL(select)
+                    if (!!result.data.create.state) {
+                        // result.data.pictureUrl = ctx.host + '/' + result.data.pictureUrl
+                        ctx.body = result
+                    } else {
+                        fs.unlink(path.resolve(__dirname, result.data.pictureUrl))
+                        ctx.body = {
+                            type: 0,
+                            msg: result.body.create.msg
+                        }
+                    }
+                } else {
+                    ctx.throw(500, 'can not upload the picture')
+                }
+            } else {
+                ctx.throw(400, 'bad requestion id in param')
+            }
+            break
+        case /\/getInvoices/.test(ctx.url):
+            if (!!param.requestion) {
+                select = `select * from invoice where requestion=${param.requestion}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = result.body
                 } else {
                     ctx.body = {
                         type: 0,
-                        msg: result.body.create.msg
+                        msg: result.msg
                     }
                 }
             } else {

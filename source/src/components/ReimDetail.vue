@@ -17,7 +17,7 @@
                 <span>{{formatDate(requestion.occurTime)}}</span>
             </el-form-item>
         </el-form>
-        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim" @deleteReim="deleteReim"></reim-wrapper>
+        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim"></reim-wrapper>
         <el-dialog
           :visible.sync="dialogVisible"
           width="30%"
@@ -61,7 +61,8 @@ export default {
             isRemark: false,
             dialogVisible: false,
             remarkResult: 0,
-            remarkReason: ''
+            remarkReason: '',
+            pics: []
         }
     },
     created() {
@@ -70,10 +71,24 @@ export default {
         if (!!param.isRemark) {
             this.isRemark = true
         }
-        this.getRequestionDetail(param.id)
+        this.getRequestionDetail(param.id, this.getInvoices)
     },
     methods: {
         formatDate,
+        getInvoices() {
+            this.$request
+                .post('/test/getInvoices')
+                .send({
+                    requestion: this.requestion.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.pics = res.body
+                    }
+                })
+        },
         remarkClose() {
             this.dialogVisible = false
         },
@@ -100,7 +115,7 @@ export default {
                 })
             this.dialogVisible = false
         },
-        getRequestionDetail(id) {
+        getRequestionDetail(id, callback = undefined) {
             this.$request
                 .post('/test/getRequestionDetail')
                 .send({
@@ -111,6 +126,9 @@ export default {
                         console.log(err)
                     } else {
                         this.requestion = res.body
+                        if (!!callback) {
+                            callback()
+                        }
                     }
                 })
             this.$request
