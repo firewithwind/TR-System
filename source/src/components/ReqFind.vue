@@ -2,18 +2,18 @@
     <div class="find">
         <el-form :model="param" label-width=".8rem" :inline="true">
             <el-form-item label="申请编号">
-                <el-input v-model="param.id" placeholder="请输入申请单的ID"></el-input>
+                <el-input v-model="param.id" placeholder="请输入申请单的ID" clearable></el-input>
             </el-form-item>
             <el-form-item label="用户">
-                <el-input v-model="param.name" placeholder="请输入用户名称或ID"></el-input>
+                <el-input v-model="param.name" placeholder="请输入用户名称或ID" clearable></el-input>
             </el-form-item>
             <el-form-item label="请求状态">
-                <el-select v-model="param.state">
+                <el-select v-model="param.state" clearable>
                     <el-option v-for="opt in steps" :key="opt.state" :value="opt.state" :label="opt.title"></el-option>
                 </el-select>
             </el-form-item>
             <el-form-item label="所属项目">
-                <el-select v-model="param.project">
+                <el-select v-model="param.project" clearable>
                     <el-option label="重点项目" value="1">
                     </el-option>
                 </el-select>

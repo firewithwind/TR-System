@@ -25,3 +25,6 @@ export function query(url) {
 export function paramString(param) {
    return qs.stringify(param)
 }
+export function downloadExcel(opts) {
+
+}

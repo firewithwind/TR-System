@@ -17,7 +17,7 @@
                 <span>{{formatDate(requestion.occurTime)}}</span>
             </el-form-item>
         </el-form>
-        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim"></reim-wrapper>
+        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim" @removeInvoice="removeInvoice"></reim-wrapper>
         <el-dialog
           :visible.sync="dialogVisible"
           width="30%"
@@ -75,6 +75,10 @@ export default {
     },
     methods: {
         formatDate,
+        removeInvoice(index) {
+            console.log(index)
+            this.pics.splice(index, 1)
+        },
         getInvoices() {
             this.$request
                 .post('/test/getInvoices')

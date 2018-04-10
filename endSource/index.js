@@ -51,7 +51,6 @@ app.use(async(ctx, next) => {
         result = null
     let extendName = ctx.url.split('.').slice(-1)[0]
     if (fileType.indexOf(extendName) !== -1) {
-        console.log(111)
         await next()
     } else {
         switch (true) {
@@ -76,7 +75,7 @@ app.use(async(ctx, next) => {
                 } else if (!param.endTime) {
                     ctx.throw(400, 'bad request body of endTime')
                 } else if (!param.requester) {
-                    ctx.throw(400, 'bad request body of endTime')
+                    ctx.throw(400, 'bad request body of requester')
                 } else if (!param.way) {
                     ctx.throw(400, 'bad request body of way')
                 } else if (!param.destination) {
@@ -338,9 +337,9 @@ app.use(async(ctx, next) => {
                 } else {
                     select = select.slice(0, -4)
                 }
+                let sitem = await querySQL(select.replace('*', 'count(*)'))
                 select += ` limit ${limit.offset}, ${limit.count}`
                 result = await querySQL(select)
-                let sitem = await querySQL(select)
                 if (!!sitem.state && !!result.state) {
                     ctx.body = {
                         results: result.body,
@@ -385,8 +384,10 @@ app.use(async(ctx, next) => {
                         select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}")`
                         result.data.create = await querySQL(select)
                         if (!!result.data.create.state) {
-                            // result.data.pictureUrl = ctx.host + '/' + result.data.pictureUrl
-                            ctx.body = result
+                            ctx.body = {
+                                id: result.data.create.body.insertId,
+                                url: `http://${ctx.host}/static/${result.data.pictureUrl}`
+                            }
                         } else {
                             fs.unlink(path.resolve(__dirname, result.data.pictureUrl))
                             ctx.body = {
@@ -415,6 +416,29 @@ app.use(async(ctx, next) => {
                     }
                 } else {
                     ctx.throw(400, 'bad requestion id in param')
+                }
+                break
+            case /\/deleteInvoice/.test(ctx.url):
+                if (!!param.id) {
+                    let _savePath = path.resolve(__dirname, 'static/', param.url.split('static/')[1])
+                    fs.unlink(_savePath, (err) => {
+                        if (err) {
+                            ctx.throw(400, 'can not delete the file')
+                        }
+                    })
+                    select = `delete from invoice where id=${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            type: 1,
+                            message: 'success'
+                        }
+                    } else {
+                        ctx.body = {
+                            type: 0,
+                            message: result.msg
+                        }
+                    }
                 }
                 break
             default:
@@ -476,7 +500,7 @@ function querySQL(select) {
                                 });
                             }
                         }, (err) => {
-                            console.log('running error')
+                            console.log('running sql error')
                             connection.rollback(function() {
                                 rej({
                                     state: 0,

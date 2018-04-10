@@ -1,13 +1,14 @@
 <template>
     <div class="detail">
-        <requestion :requestion="requestion" :inline="true"></requestion>
-        <reim-wrapper :requestion="requestion" :reims="reims"></reim-wrapper>
+        <requestion id="requestion" :requestion="requestion" :inline="true"></requestion>
+        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics"></reim-wrapper>
     </div>
 </template>
 <script>
 import Requestion from '@/components/Requestion'
 import ReimWrapper from '@/components/ReimWrapper'
-import {query} from '@/utils'
+import {query, formatDate} from '@/utils'
+import {feeTypesEnum} from '@/dataMap'
 
 export default {
     components: {
@@ -16,8 +17,10 @@ export default {
     },
     data() {
         return {
+            feeTypesEnum,
             requestion: {},
-            reims: []
+            reims: [],
+            pics: []
         }
     },
     created() {
@@ -26,10 +29,25 @@ export default {
         if (!!param.isRemark) {
             this.isRemark = true
         }
-        this.getRequestionDetail(param.id)
+        this.getRequestionDetail(param.id, this.getInvoices)
     },
     methods: {
-        getRequestionDetail(id) {
+        formatDate,
+        getInvoices() {
+            this.$request
+                .post('/test/getInvoices')
+                .send({
+                    requestion: this.requestion.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.pics = res.body
+                    }
+                })
+        },
+        getRequestionDetail(id, callback = undefined) {
             this.$request
                 .post('/test/getRequestionDetail')
                 .send({
@@ -40,6 +58,7 @@ export default {
                         console.log(err)
                     } else {
                         this.requestion = res.body
+                        callback()
                     }
                 })
             this.$request
