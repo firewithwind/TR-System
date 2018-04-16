@@ -93,7 +93,7 @@
         </div>
         <div id="printTripInfo" style="width:100%;font-size:14px;text-align:center;">
             <span style="font-weight: bold">网络与信息安全技术研究中心出差任务审批单</span>
-            <table border="1" style="width:80%;margin:15px auto 0;">
+            <table style="width:80%;margin:15px auto 0;" cellspacing="0">
                 <tr>
                     <td class="label">申请人</td>
                     <td class="value">{{requestion.name}}</td>
@@ -187,6 +187,16 @@ export default {
             <style>
             table {
                 font-size: 14px;
+                border:solid #000000;
+                border-width:1px 0px 0px 1px;
+            }
+            td{
+                border:solid #000000;
+                border-width:0px 1px 1px 0px;
+            }
+            th {
+                border:solid #000000;
+                border-width:0px 1px 1px 0px;
             }
             .label {
                 width: 70px;

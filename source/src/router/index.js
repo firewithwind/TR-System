@@ -12,6 +12,10 @@ import ReimUndone from '@/components/ReimUndone'
 import ReimUnremark from '@/components/ReimUnremark'
 import ReimDetail from '@/components/ReimDetail'
 import Detail from '@/components/Detail'
+import Statistics from '@/components/Statistics'
+import StatisticByYear from '@/components/StatisticByYear'
+import StatisticByMonth from '@/components/StatisticByMonth'
+import StatisticByPerson from '@/components/StatisticByPerson'
 
 Vue.use(Router)
 
@@ -65,6 +69,24 @@ export default new Router({
                 {
                     path: 'detail',
                     component: Detail
+                }
+            ]
+        },
+        {
+            path: '/statistics/:id',
+            component: Statistics,
+            children: [
+                {
+                    path: 'byyear',
+                    component: StatisticByYear
+                },
+                {
+                    path: 'bymonth',
+                    component: StatisticByMonth
+                },
+                {
+                    path: 'byperson',
+                    component: StatisticByPerson
                 }
             ]
         }

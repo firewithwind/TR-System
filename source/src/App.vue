@@ -1,26 +1,32 @@
 <template>
   <div id="app">
-    <el-menu
-      :default-active="activeIndex"
-      class="el-menu"
-      mode="horizontal"
-      :router="true"
-      background-color="#545c64"
-      text-color="#fff"
-      active-text-color="#ffd04b">
-        <el-menu-item class="main-page" index="/index">差旅报销</el-menu-item>
-        <el-menu-item index="/reimbursement/index/createreq">差旅报销</el-menu-item>
-        <el-menu-item index="/project">项目管理</el-menu-item>
-        <el-menu-item index="/statistics">数据统计</el-menu-item>
-        <el-menu-item class="user-info" index="/userInfor">
-            <el-badge is-dot>
-                <img class="logo" src="./assets/logo.png">
-            </el-badge>
-            <a href="user">{{user.name}}</a>
-            <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
-        </el-menu-item>
-    </el-menu>
-    <router-view />
+    <el-container>
+        <el-header>
+            <el-menu
+              :default-active="activeIndex"
+              class="el-menu"
+              mode="horizontal"
+              :router="true"
+              background-color="#545c64"
+              text-color="#fff"
+              active-text-color="#ffd04b">
+                <el-menu-item class="main-page" index="/index">差旅报销</el-menu-item>
+                <el-menu-item index="/reimbursement/index/createreq">差旅报销</el-menu-item>
+                <el-menu-item index="/project">项目管理</el-menu-item>
+                <el-menu-item index="/statistics/index/byperson">数据统计</el-menu-item>
+                <el-menu-item class="user-info" index="/userInfor">
+                    <el-badge is-dot>
+                        <img class="logo" src="./assets/logo.png">
+                    </el-badge>
+                    <a href="user">{{user.name}}</a>
+                    <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
+                </el-menu-item>
+            </el-menu>
+        </el-header>
+        <el-main class="index-content">
+            <router-view />
+        </el-main>
+    </el-container>
   </div>
 </template>
 
@@ -64,20 +70,29 @@ export default {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    .main-page
-        font-size: .18rem
-        border: none
-        &:hover
-            background-color: rgb(84, 92, 100)
-    .user-info
-        float: right
-        border: none
-        .logo
-            width: .4rem
-            height: .4rem
-            border-radius: .4rem
-        .el-badge__content
-            margin-top: .15rem
-        a
-            text-decoration: none
+    .el-header
+        position: fixed
+        left: 0
+        right: 0
+        top: 0
+        padding: 0
+        z-index: 100
+        .main-page
+            font-size: .18rem
+            border: none
+            &:hover
+                background-color: rgb(84, 92, 100)
+        .user-info
+            float: right
+            border: none
+            .logo
+                width: .4rem
+                height: .4rem
+                border-radius: .4rem
+            .el-badge__content
+                margin-top: .15rem
+            a
+                text-decoration: none
+    .index-content
+        padding: .61rem 0 0 0
 </style>

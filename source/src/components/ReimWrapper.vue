@@ -5,7 +5,7 @@
                 <svg v-if="requestion.state>=4" class="icon" aria-hidden="true" @click="exportReim">
                     <use xlink:href="#icon-print"></use>
                 </svg>
-                <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark" class="addReim" @click="showDialog1Visible">添加条目</span></p>
+                <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark&&isSelf" class="addReim" @click="showDialog1Visible">添加条目</span></p>
             <el-table
                 class="reimbursement-wrapper"
                 :data="reims"
@@ -73,7 +73,8 @@
                     </template>
                 </el-table-column>
             </el-table>
-            <div v-if="requestion.state>=2&&requestion.state<=3&&!isRemark">
+            <p class="acount-money">共{{acountMoney}}元</p>
+            <div>
                 <p class="split">上传发票</p>
                 <li v-for="(pic, $index) in pics" :key="pic.id" class="picture-content">
                     <img :src="pic.url" alt="" class="el-upload-list__item-thumbnail">
@@ -87,6 +88,7 @@
                     </span>
                 </li>
                 <el-upload
+                    v-show="requestion.state>=2&&requestion.state<=3&&!isRemark&&isSelf"
                     :action="'/test/uploadInvoice?requestion=' + requestion.id"
                     list-type="picture-card"
                     accept="image/*"
@@ -181,7 +183,7 @@
                 </tr>
             </table>
             <p style="width:80%;margin:0 auto;text-align:left;font-weight:bold">项目卡号　（不填）</p>
-            <table border="1" style="width:80%;margin:0 auto">
+            <!-- <table border="1" style="width:80%;margin:0 auto">
                 <tr>
                     <th>序号</th>
                     <th>费用类型</th>
@@ -198,12 +200,12 @@
                     <td>{{reim.money}}</td>
                     <td>{{reim.note}}</td>
                 </tr>
-            </table>
+            </table> -->
         </div>
     </div>
 </template>
 <script>
-import {formatTime, formatDate} from '@/utils'
+import {formatTime, formatDate, downloadExcel} from '@/utils'
 import {ways, feeTypes, steps, feeTypesEnum, seat} from '@/dataMap'
 export default {
     props: {
@@ -264,34 +266,62 @@ export default {
             dialogPicture: false
         }
     },
+    computed: {
+        acountMoney() {
+            if (this.reims.length === 0) {
+                return 0
+            } else if (this.reims.length === 1) {
+                return this.reims[0].money
+            }
+            return this.reims.reduce((base, reim) => {
+                base = base.money || base
+                return base + reim.money
+            })
+        },
+        isSelf() {
+            return this.$store.state.user.id === +this.requestion.requester
+        }
+    },
     methods: {
         formatTime,
         formatDate,
         exportReim() {
-            let style = `
-            <style>
-            table {
-                font-size: 14px;
-            }
-            .label {
-                text-align: center;
-            }
-            .value {
-                text-indent: 2px;
-                text-align: left;
-                font-weight: 400;
-            }
-            .desc {
-                height: 100px;
-            }
-            </style>`
-            let newWindow = window.open('_blank')
-            let codestr = document.getElementById('printReimInfo').outerHTML
-            newWindow.document.write(style)
-            newWindow.document.write(codestr)
-            newWindow.document.close()
-            newWindow.print()
-            newWindow.close()
+            this.$request
+                .post('/test/exportReim')
+                .send({
+                    id: this.requestion.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        downloadExcel()
+                    }
+                })
+            // let style = `
+            // <style>
+            // table {
+            //     font-size: 14px;
+            // }
+            // .label {
+            //     text-align: center;
+            // }
+            // .value {
+            //     text-indent: 2px;
+            //     text-align: left;
+            //     font-weight: 400;
+            // }
+            // .desc {
+            //     height: 100px;
+            // }
+            // </style>`
+            // let newWindow = window.open('_blank')
+            // let codestr = document.getElementById('printReimInfo').outerHTML
+            // newWindow.document.write(style)
+            // newWindow.document.write(codestr)
+            // newWindow.document.close()
+            // newWindow.print()
+            // newWindow.close()
         },
         addNewReim() {
             this.$emit('addNewReim', this.newReim)
@@ -375,6 +405,10 @@ export default {
             float: right
             margin-right: .1rem
             cursor: pointer
+    .acount-money
+        font-size: .14rem
+        text-align: right
+        padding-right: .3rem
     .picture-content
         position: relative
         width: 1.48rem

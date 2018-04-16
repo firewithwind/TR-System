@@ -1,10 +1,9 @@
 <template>
     <div class="detail">
-        <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
+        <!-- <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
             <el-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.desc"></el-step>
-        </el-steps>
+        </el-steps> -->
         <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark"></requestion>
-        <!-- <reim-wrapper :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark" :reims="reims"></reim-wrapper> -->
     </div>
 </template>
 <script>
@@ -44,18 +43,6 @@ export default {
                         this.requestion = res.body
                     }
                 })
-            // this.$request
-            //     .post('/test/getReimbursements')
-            //     .send({
-            //         id: id
-            //     })
-            //     .end((err, res) => {
-            //         if (!!err) {
-            //             console.log(err)
-            //         } else {
-            //             this.reims = res.body
-            //         }
-            //     })
         },
         dealOperate(rem, ope) {
             if (ope === 0) {

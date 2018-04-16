@@ -7,11 +7,13 @@ import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
 import request from 'superagent'
 import router from './router'
+import * as echarts from 'echarts'
 
 Vue.use(Vuex)
 Vue.use(ElementUI)
 
 Vue.prototype.$request = request
+Vue.prototype.$chart = echarts
 
 Vue.config.productionTip = false
 

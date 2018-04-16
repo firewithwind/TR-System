@@ -7,6 +7,7 @@ const static = require('koa-static')
 const { uploadFile } = require('./uploadFile.js')
 const fs = require('fs')
 const qs = require('querystring')
+const { createPersonReim } = require('./utils/index.js')
 
 const app = new koa();
 
@@ -152,7 +153,11 @@ app.use(async(ctx, next) => {
                             where id=${param.id}`
                     var queryRes = await querySQL(select)
                     if (!!queryRes.state) {
-                        var level = queryRes.body[0].level
+                        if(queryRes.body.length > 0) {
+                            var level = queryRes.body[0].level
+                        } else {
+                            ctx.throw(500, 'unexcept error')
+                        }
                     } else {
                         ctx.throw(400, 'no this user')
                     }
@@ -198,7 +203,7 @@ app.use(async(ctx, next) => {
                         ctx.body = result.msg
                     }
                 } else {
-                    ctx.throw(400, 'bad params in request');
+                    ctx.throw(400, 'bad params in request')
                 }
                 break
             case /\/approveRequestion/.test(ctx.url):
@@ -439,6 +444,47 @@ app.use(async(ctx, next) => {
                             message: result.msg
                         }
                     }
+                }
+                break
+            case /\/getPersonData/.test(ctx.url):
+                if (!!param.id) {
+                    select  = `select reim.*
+                                from requestion req join reimbursement reim on req.id = reim.requestion
+                                where req.requester = ${param.id}
+                                and reim.startDate >= ${param.startDate}
+                                and reim.endDate <= ${param.endDate}`
+                    if (!!param.way) {
+                        select += `and reim.way = ${param.way}`
+                    }
+                    if (!!param.project) {
+                        select += `and req.project = ${param.project}`
+                    }
+                    select += ' order by reim.startDate'
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.throw(400, result.msg)
+                    }
+                } else {
+                    ctx.throw(400, 'bad user id in param')
+                }
+                break
+            case /\/exportReim/.test(ctx.url):
+                if (param.id) {
+                    select = [
+                        `select r.*, u.name from requestion r join user u on u.id = r.requester where r.id = ${param.id}`,
+                        `select * from reimbursement where requestion = ${param.id}`
+                    ]
+                    result = await querySQL(select)
+                    console.log(result)
+                    if (!!result.state) {
+                        createPersonReim(result.body[1].body, undefined, result.body[0].body[0])
+                    } else {
+                        ctx.throw(400, result[0].msg || result[1].msg)
+                    }
+                } else {
+                    ctx.throw(400, 'bad requestion id in param')
                 }
                 break
             default:
