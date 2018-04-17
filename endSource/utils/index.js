@@ -1,4 +1,5 @@
 const xlsx = require('xlsx-style')
+const path = require('path')
 
 const feeTypesEnum = {
     30: '火车',
@@ -37,7 +38,6 @@ let formatTime = function(time) {
 }
 
 exports.createPersonReim = function (reims, time, requestion) {
-    console.log(111)
     let l = reims.length
     let trL = l >= 7 ? l : 7
     let acount = function() {
@@ -396,7 +396,15 @@ exports.createPersonReim = function (reims, time, requestion) {
                     r: 8 + trL
                 }
             }
-        ]
+        ],
+        '!cols':{
+            width: '9',
+            hidden: '1',
+            customWidth: '1',
+            wpx: 54,
+            wch: 8.17,
+            MDW: 6
+        }
     }
     for (let i = 0; i <= trL; i ++) {
         st['!merges'].push(
@@ -504,9 +512,9 @@ exports.createPersonReim = function (reims, time, requestion) {
             'sheet1': st
         }
     }
+    let filename = (Date.now() + requestion.id + Math.random()).toString(16)
 
-    xlsx.writeFile(workbook, 'new.xlsx', {
-        cellStyles: true
-    })
+    xlsx.writeFile(workbook, path.resolve(__dirname, `../static/reimExcel/${filename}.xlsx`))
+    return `/static/reimExcel/${filename}.xlsx`
 }
 

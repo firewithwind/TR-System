@@ -16,6 +16,7 @@ import Statistics from '@/components/Statistics'
 import StatisticByYear from '@/components/StatisticByYear'
 import StatisticByMonth from '@/components/StatisticByMonth'
 import StatisticByPerson from '@/components/StatisticByPerson'
+import Login from '@/components/Login'
 
 Vue.use(Router)
 
@@ -25,6 +26,11 @@ export default new Router({
             path: '/index',
             name: 'index',
             component: Index
+        },
+        {
+            path: '/login',
+            name: 'login',
+            component: Login
         },
         {
             path: '/reimbursement/:id',

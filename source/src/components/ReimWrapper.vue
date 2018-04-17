@@ -205,7 +205,7 @@
     </div>
 </template>
 <script>
-import {formatTime, formatDate, downloadExcel} from '@/utils'
+import {formatTime, formatDate} from '@/utils'
 import {ways, feeTypes, steps, feeTypesEnum, seat} from '@/dataMap'
 export default {
     props: {
@@ -295,7 +295,7 @@ export default {
                     if (!!err) {
                         console.log(err)
                     } else {
-                        downloadExcel()
+                        window.open(res.text)
                     }
                 })
             // let style = `

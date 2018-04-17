@@ -25,9 +25,6 @@ export function query(url) {
 export function paramString(param) {
     return qs.stringify(param)
 }
-export function downloadExcel(opts) {
-
-}
 export function getMonthAbs(start, end) {
     return new Promise((resolve, reject) => {
                 if (!!start && !!end) {

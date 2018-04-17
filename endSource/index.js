@@ -41,7 +41,8 @@ const fileType = [
     'wav',
     'wma',
     'wmv',
-    'xml'
+    'xml',
+    'xlsx'
 ]
 
 app.use(koaBody())
@@ -385,8 +386,10 @@ app.use(async(ctx, next) => {
                         fileType: 'album',
                         path: serverFilePath
                     })
+                     fs.unlink(path.resolve(__dirname, result.data.pictureUrl))
+                     ctx.throw(500, 'an error occur in server')
                     if (!!result.data.pictureUrl) {
-                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}")`
+                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}", ${Date.now()})`
                         result.data.create = await querySQL(select)
                         if (!!result.data.create.state) {
                             ctx.body = {
@@ -477,9 +480,14 @@ app.use(async(ctx, next) => {
                         `select * from reimbursement where requestion = ${param.id}`
                     ]
                     result = await querySQL(select)
-                    console.log(result)
                     if (!!result.state) {
-                        createPersonReim(result.body[1].body, undefined, result.body[0].body[0])
+                        try {
+                            let filePath = createPersonReim(result.body[1].body, undefined, result.body[0].body[0])
+                            ctx.body = `http://${ctx.host}${filePath}`
+                        } catch(e) {
+                            ctx.throw(500, 'can not export the .xlsx file')
+                        }
+
                     } else {
                         ctx.throw(400, result[0].msg || result[1].msg)
                     }
