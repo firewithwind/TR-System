@@ -17,7 +17,7 @@
                 <span>{{formatDate(requestion.occurTime)}}</span>
             </el-form-item>
         </el-form>
-        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim" @removeInvoice="removeInvoice"></reim-wrapper>
+        <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim" @removeInvoice="removeInvoice" :isRemark="isRemark"></reim-wrapper>
         <el-dialog
           :visible.sync="dialogVisible"
           width="30%"
@@ -40,6 +40,7 @@
         </el-dialog>
         <div class="operate-wrapper">
             <el-button v-if="(requestion.state>=3&&requestion.state<4)&&isRemark" type="primary" class="submit" @click="dialogVisible=true">审批</el-button>
+            <el-button v-if="requestion.state===4&&isRemark" type="primary" class="submit" @click="endInvoice">已收票</el-button>
         </div>
     </div>
 </template>
@@ -75,8 +76,29 @@ export default {
     },
     methods: {
         formatDate,
+        endInvoice() {
+            this.$request
+                .post('/test/approveRequestion')
+                .send({
+                    id: this.requestion.id,
+                    uid: this.$store.state.user.id,
+                    state: this.requestion.state,
+                    operate: 0,
+                    reason: ''
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        this.$message({
+                            type: 'success',
+                            message: '已完成'
+                        })
+                        this.getRequestionDetail(this.requestion.id)
+                    }
+                })
+        },
         removeInvoice(index) {
-            console.log(index)
             this.pics.splice(index, 1)
         },
         getInvoices() {
@@ -231,5 +253,6 @@ export default {
         .el-form-item
             min-width: 30%
     .operate-wrapper
+        width: 100%
         margin-top: .2rem
 </style>

@@ -41,23 +41,25 @@ export default {
     },
     created() {
         let id = localStorage.getItem('user')
-        if (!!id) {
-            this.$request
-                .post('/test/getUserInfor')
-                .send({
-                    id: id
-                })
-                .set('accept', 'json')
-                .end((err, res) => {
-                    if (!!err) {
-                        console.log(err)
-                        return
-                    }
-                    this.user = res.body
-                    this.$store.commit('setUser', res.body)
-                })
+        if (!id) {
+            this.$router.push('/login')
         } else {
-            localStorage.setItem('user', '00000001')
+            if (!this.$store.state.user.id) {
+                this.$request
+                    .post('/test/getUserInfor')
+                    .send({
+                        id: id
+                    })
+                    .set('accept', 'json')
+                    .end((err, res) => {
+                        if (!!err) {
+                            console.log(err)
+                            return
+                        }
+                        this.user = res.body
+                        this.$store.commit('setUser', res.body)
+                    })
+            }
         }
     }
 }

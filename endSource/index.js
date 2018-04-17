@@ -56,9 +56,39 @@ app.use(async(ctx, next) => {
         await next()
     } else {
         switch (true) {
+            case /\/login/.test(ctx.url):
+                if (!param.id || !param.pwd) {
+                    ctx.throw(400, 'bad userID or password')
+                } else {
+                        select = `select * from user where id = "${param.id}" or phone = "${param.id}" and pwd = "${param.pwd}"`
+                        result = await querySQL(select)
+                        if (!result.state) {
+                            ctx.throw(400, result.msg)
+                        } else {
+                            ctx.body = result.body[0]
+                        }
+                }
+                break
+            case /\/register/.test(ctx.url):
+                if (!param.id||!param.pwd||!param.name||!param.phone||!param.laboratory) {
+                    ctx.throw(400, 'bad register information')
+                } else {
+                    select = `insert into user
+                            values("${param.id}", "${param.name}", "${param.phone}", "${param.Email}", 0, "${param.pwd}", NULL, ${param.laboratory})`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            type: 0,
+                            msg: 'success'
+                        }
+                    } else {
+                        ctx.throw(500, result.msg)
+                    }
+                }
+                break
             case /\/getUserInfor/.test(ctx.url):
                 if (!!param.id) {
-                    select = 'select * from user where id = ' + param.id
+                    select = `select * from user where id = "${param.id}"`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body[0]
@@ -121,7 +151,7 @@ app.use(async(ctx, next) => {
                 if (!!param.id) {
                     select = `select *
                             from requestion
-                            where requester=${param.id} and state<2`
+                            where requester="${param.id}" and state<2`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -136,7 +166,7 @@ app.use(async(ctx, next) => {
                 if (!!param.id) {
                     select = `select *
                             from requestion
-                            where requester=${param.id} and state>=3 and state<5`
+                            where requester="${param.id}" and state>=3 and state<5`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -151,7 +181,7 @@ app.use(async(ctx, next) => {
                 if (!!param.id) {
                     select = `select level
                             from user
-                            where id=${param.id}`
+                            where id="${param.id}"`
                     var queryRes = await querySQL(select)
                     if (!!queryRes.state) {
                         if(queryRes.body.length > 0) {
@@ -193,7 +223,7 @@ app.use(async(ctx, next) => {
                 if (param.id && param.uid) {
                     select = `delete
                             from requestion
-                            where id=${param.id} and requester=${param.uid}`
+                            where id=${param.id} and requester="${param.uid}"`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -209,17 +239,17 @@ app.use(async(ctx, next) => {
                 break
             case /\/approveRequestion/.test(ctx.url):
                 if (!param.id || !param.ope) {
-                    select = `select level from user where id=${param.uid}`
+                    select = `select level from user where id="${param.uid}"`
                     var queryRes = await querySQL(select)
                     if (!!queryRes.state) {
                         var level = queryRes.body[0].level
                     } else {
                         ext.throw(400, 'no this user')
                     }
-                    if ((level === 1 && param.state < 2) || (level === 2 && param.state >= 3 && param.state < 4)) {
+                    if ((level === 1 && param.state < 2) || (level === 2 && param.state >= 3 && param.state <= 4)) {
                         if (param.operate === 0) {
                             select = `update requestion
-                                    set state=state+1, approver=${param.uid} where id=${param.id}`
+                                    set state=state+1, approver="${param.uid}" where id=${param.id}`
                             result = await querySQL(select)
                             if (!!result.state) {
                                 ctx.body = {
@@ -234,10 +264,10 @@ app.use(async(ctx, next) => {
                             }
                         }
                     } else {
-                        cxt.throw(400, 'you have no acception for remarking')
+                        ctx.throw(400, 'you have no acception for remarking')
                     }
                 } else {
-                    ext.throw(400, 'bad param in requestion')
+                    etx.throw(400, 'bad param in requestion')
                 }
                 break
             case /\/addReimbursement/.test(ctx.url):
@@ -257,7 +287,7 @@ app.use(async(ctx, next) => {
                             "${param.endTime}",
                             "${param.seat}",
                             "${param.desc}",
-                            NULL, NULL, NULL
+                            NULL, NULL, "${param.note}"
                             )`, `update requestion set state=3 where id=${param.requestion}`]
                     result =await querySQL(select)
                     if (!!result.state) {
@@ -295,7 +325,7 @@ app.use(async(ctx, next) => {
                 if (!!param.id ) {
                     select = `select *
                             from user u join requestion r on u.id=r.requester
-                            where r.requester=${param.id} and state>=2 and state <3`
+                            where r.requester="${param.id}" and state>=2 and state <3`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -335,11 +365,11 @@ app.use(async(ctx, next) => {
                     key = 1
                 }
                 if (!!param.startDate) {
-                    select += ` occurTime >= "${param.startDate}" and occurTime <= "${param.endDate} and"`
+                    select += ` occurTime >= "${param.startDate}" and occurTime <= "${param.endDate}" and`
                     key = 1
                 }
                 if (!key) {
-                    select += `r.requester=${user}`
+                    select += `r.requester="${user}"`
                 } else {
                     select = select.slice(0, -4)
                 }
@@ -386,10 +416,8 @@ app.use(async(ctx, next) => {
                         fileType: 'album',
                         path: serverFilePath
                     })
-                     fs.unlink(path.resolve(__dirname, result.data.pictureUrl))
-                     ctx.throw(500, 'an error occur in server')
                     if (!!result.data.pictureUrl) {
-                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}", ${Date.now()})`
+                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}", "${Date.now()}")`
                         result.data.create = await querySQL(select)
                         if (!!result.data.create.state) {
                             ctx.body = {
@@ -397,7 +425,7 @@ app.use(async(ctx, next) => {
                                 url: `http://${ctx.host}/static/${result.data.pictureUrl}`
                             }
                         } else {
-                            fs.unlink(path.resolve(__dirname, result.data.pictureUrl))
+                            fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl))
                             ctx.body = {
                                 type: 0,
                                 msg: result.body.create.msg
@@ -453,7 +481,7 @@ app.use(async(ctx, next) => {
                 if (!!param.id) {
                     select  = `select reim.*
                                 from requestion req join reimbursement reim on req.id = reim.requestion
-                                where req.requester = ${param.id}
+                                where req.requester = "${param.id}"
                                 and reim.startDate >= ${param.startDate}
                                 and reim.endDate <= ${param.endDate}`
                     if (!!param.way) {

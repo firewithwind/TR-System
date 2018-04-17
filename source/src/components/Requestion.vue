@@ -63,7 +63,7 @@
                 <span v-else>{{requestion.description}}</span>
             </el-form-item>
             <el-form-item v-if="requestion.state>=2" label="审批人:">
-                <span v-for="item in requestion.approver" :key="item">{{item}}&nbsp;&nbsp;&nbsp;</span>
+                <span v-for="item in requestion.approver" :key="item">{{item}}</span>
             </el-form-item>
         </el-form>
         <el-dialog

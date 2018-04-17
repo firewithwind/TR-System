@@ -1,6 +1,6 @@
 <template>
     <div class="reimwrapper">
-        <div v-if="requestion.state>1">
+        <div v-if="requestion.state>2 || (requestion.state>1 && isCreatable)">
             <p class="split">单据报销申请
                 <svg v-if="requestion.state>=4" class="icon" aria-hidden="true" @click="exportReim">
                     <use xlink:href="#icon-print"></use>
@@ -74,7 +74,7 @@
                 </el-table-column>
             </el-table>
             <p class="acount-money">共{{acountMoney}}元</p>
-            <div>
+            <div class="invoice-wrapper">
                 <p class="split">上传发票</p>
                 <li v-for="(pic, $index) in pics" :key="pic.id" class="picture-content">
                     <img :src="pic.url" alt="" class="el-upload-list__item-thumbnail">
@@ -82,7 +82,7 @@
                         <span class="icon picture-preview" @click="handlePictureCardPreview(pic)">
                             <i class="el-icon-zoom-in"></i>
                         </span>
-                        <span class="icon picture-delete" @click="handleRemove(pic, undefined, $index)">
+                        <span v-if="requestion.state>=2&&requestion.state<=3&&!isRemark&&isSelf" class="icon picture-delete" @click="handleRemove(pic, undefined, $index)">
                             <i class="el-icon-delete"></i>
                         </span>
                     </span>
@@ -153,9 +153,8 @@
                         <span slot="prepend">￥</span>
                     </el-input>
                 </el-form-item>
-                <el-form-item label="金额">
-                    <el-input v-model="newReim.note" placeholder="输入费用金额">
-                    </el-input>
+                <el-form-item label="备注">
+                    <el-input v-model="newReim.note" placeholder="输入备注信息"></el-input>
                 </el-form-item>
             </el-form>
             <span slot="footer" class="dialog-footer">
@@ -236,6 +235,10 @@ export default {
         showButton: {
             type: Boolean,
             default: true
+        },
+        isCreatable: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -279,7 +282,7 @@ export default {
             })
         },
         isSelf() {
-            return this.$store.state.user.id === +this.requestion.requester
+            return this.$store.state.user.id === this.requestion.requester
         }
     },
     methods: {
@@ -409,6 +412,14 @@ export default {
         font-size: .14rem
         text-align: right
         padding-right: .3rem
+    .invoice-wrapper
+        &:after
+            clear:both
+            content:'.'
+            display:block
+            width: 0
+            height: 0
+            visibility:hidden
     .picture-content
         position: relative
         width: 1.48rem

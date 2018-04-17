@@ -18,7 +18,7 @@
                 <span>{{formatDate(requestion.occurTime)}}</span>
             </el-form-item>
         </el-form>
-        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim"></reim-wrapper>
+        <reim-wrapper :requestion="requestion" :reims="reims" @addNewReim="addNewReim" :isCreatable="true"></reim-wrapper>
     </div>
 </template>
 <script>
@@ -59,7 +59,7 @@ export default {
             this.requestion = this.opts[val]
         },
         addNewReim(rem) {
-            if (this.$store.state.user.id === +this.requestion.requester) {
+            if (this.$store.state.user.id === this.requestion.requester) {
                 if (!rem) {
                     this.$message({
                         type: 'error',

@@ -41,6 +41,7 @@ export default {
                         console.log(err)
                     } else {
                         this.requestion = res.body
+                        this.requestion.approver = this.requestion.approver.split(',')
                     }
                 })
         },

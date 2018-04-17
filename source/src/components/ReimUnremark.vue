@@ -73,11 +73,7 @@ export default {
                 })
         },
         goForDetail(id) {
-            if (this.$store.state.user === 1) {
-                this.$router.push('/reimbursement/index/reqdetail?id=' + id + '&isRemark=1')
-            } else {
-                this.$router.push('/reimbursement/index/reimdetail?id=' + id + '&isRemark=1')
-            }
+            this.$router.push('/reimbursement/index/reimdetail?id=' + id + '&isRemark=1')
         }
     }
 }

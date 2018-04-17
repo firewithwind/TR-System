@@ -87,6 +87,12 @@ export default {
             ]
         }
     },
+    created() {
+        let id = localStorage.getItem('user')
+        if (!id) {
+            this.$router.replace('/login')
+        }
+    },
     methods: {
         goRouter(path) {
             this.$router.push(path)
