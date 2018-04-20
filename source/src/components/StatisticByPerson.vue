@@ -10,94 +10,73 @@
                         v-model="param.dateRange"
                         type="daterange"
                         start-placeholder="开始日期"
-                        end-placeholder="结束日期"></el-date-picker>
+                        end-placeholder="结束日期"
+                        :picker-options="pickerOptions"></el-date-picker>
                 </el-form-item>
-                <el-form-item label="消费方式">
-                    <el-select v-model="param.way" clearable>
-                        <el-option-group
-                            v-for="group in feeTypes"
-                            :key="group.label"
-                            :label="group.label">
-                            <el-option
-                                v-for="item in group.options"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-option-group>
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="选择项目">
-                    <el-select v-model="param.project">
-                        <el-option
-                            v-for="pro in projects"
-                            :key="pro.id"
-                            :value="pro.id"
-                            :label="pro.name">
-                        </el-option>
-                    </el-select>
-                </el-form-item>
-                <el-button class="submit" type="primary">查询</el-button>
+                <el-button class="submit" type="primary" @click="getPersonData(chartByMonth)">查询</el-button>
                 <p class="split">提示：将默认对当前用户数据进行统计</p>
             </el-form>
         </div>
         <div class="content">
+            <p class="title">个人按月报销统计（单位：￥）</p>
             <div class="charts" ref="chart"></div>
+            <p class="title">个人项目报销统计（单位：￥）</p>
+            <div class="charts" ref="chart2"></div>
+            <p class="title">个人消费类型报销统计（单位：￥）</p>
+            <div class="pie-chart" ref="chart3"></div>
         </div>
     </div>
 </template>
 <script>
 import {feeTypes} from '@/dataMap'
-import {getMonthAbs, setChartsDate} from '@/utils'
+import {formatDate} from '@/utils'
+import {getMonthAbs, setPersonMonthsChartsData, setPersonProjectsChatsData, setPersonTypeChartsData} from '@/utils/statisticsDataHandle'
+
 export default {
     data() {
         return {
             feeTypes,
             param: {
                 id: '',
-                dateRange: [],
-                way: '',
-                project: ''
+                dateRange: []
             },
             projects: [],
             reims: [],
-            chartByMonth: null
+            chartByMonth: [],
+            pickerOptions: {
+                disabledDate: (date) => {
+                    let dateSpace = date.getTime() > Date.now()
+                    return dateSpace
+                }
+            }
         }
     },
     mounted() {
-        let option = {
-            title: {
-                    text: '个人按月统计图'
-                },
-                tooltip: {},
-                xAxis: {
-                    type: 'category',
-                    data: []
-                },
-                yAxis: {},
-                series: [{
-                    name: '消费',
-                    type: 'line',
-                    data: []
-                }]
-        }
-        this.chartByMonth = this.$chart.init(this.$refs.chart, 'light')
-        this.chartByMonth.setOption(option)
+        this.chartByMonth[0] = this.$chart.init(this.$refs.chart, 'light')
+        this.chartByMonth[1] = this.$chart.init(this.$refs.chart2, 'light')
+        this.chartByMonth[2] = this.$chart.init(this.$refs.chart3, 'light')
         this.getPersonData(this.chartByMonth)
+        this.chartByMonth[0].on('click', this.selectMonth)
+        window.onresize = () => {
+            this.chartByMonth.forEach(chart => {
+                chart.resize()
+            })
+        }
     },
     methods: {
-        getPersonData(chart) {
+        getPersonData(charts) {
             let body = {}
-            body.id = this.param.id || this.$store.state.user.id
-            if (this.param.dateRange.length === 0) {
+            body.id = this.param.id || this.$store.state.user.id || localStorage.user
+            if (!this.param.dateRange || this.param.dateRange.length === 0) {
                 body.endDate = new Date().setHours(0, 0, 0, 0)
                 body.startDate = new Date(body.endDate).setMonth(new Date(body.endDate).getMonth() - 9)
             } else {
                 body.startDate = this.param.dateRange[0].getTime()
                 body.endDate = this.param.dateRange[1].getTime()
             }
-            body.way = this.param.way
-            body.project = this.param.project
+            charts.forEach(chart => {
+                chart.showLoading()
+            })
             this.$request
                 .post('/test/getPersonData')
                 .send({
@@ -107,29 +86,100 @@ export default {
                     if (!!err) {
                         console.log(err)
                     } else {
+                        console.log(111)
                         this.reims = res.body
                         getMonthAbs(body.startDate, body.endDate)
-                            .then((res) => {
-                                let option = {
-                                    title: {
-                                            text: '个人按月统计图'
-                                        },
-                                        tooltip: {},
-                                        xAxis: {
-                                            type: 'category',
-                                            data: res
-                                        },
-                                        yAxis: {},
-                                        series: [{
-                                            name: '消费',
-                                            type: 'line',
-                                            data: setChartsDate(this.reims, res)
-                                        }]
-                                }
-                                this.chartByMonth.setOption(option)
-                            })
+                        .then((res) => {
+                            this.createPersonOption(res, setPersonMonthsChartsData(this.reims, res), 'line', charts[0], {})
+                        })
+                        let result1 = setPersonProjectsChatsData(res.body)
+                        let result2 = setPersonTypeChartsData(res.body)
+                        this.createPersonOption(result1.x, result1.data, 'bar', charts[1], {})
+                        this.createPersonPieOption(result2, charts[2])
                     }
                 })
+        },
+        createPersonOption(xData, sData, type, chart, extend) {
+            let option = {
+                tooltip: {},
+                xAxis: {
+                    type: 'category',
+                    data: xData
+                },
+                dataZoom: [
+                    {
+                        xAxisIndex: 0
+                    }
+                ],
+                yAxis: {},
+                series: [{
+                    name: '消费',
+                    type: type,
+                    data: sData
+                }]
+            }
+            option = Object.assign({}, option, extend)
+            chart.hideLoading()
+            chart.setOption(option)
+        },
+        createPersonPieOption(data, chart, extend) {
+            let option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b} : {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    top: 'middle',
+                    // left: 'right',
+                    right: '20%',
+                    data: data.x
+                },
+                series: [
+                    {
+                        name: '消费类型',
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['38%', '50%'],
+                        data: data.result.sort(function (a, b) { return a.value - b.value }),
+                        label: {
+                            normal: {
+                                textStyle: {
+                                    color: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        },
+                        labelLine: {
+                            normal: {
+                                lineStyle: {
+                                    color: 'rgba(0, 0, 0, 0.5)'
+                                },
+                                smooth: 0.2,
+                                length: 10,
+                                length2: 20
+                            }
+                        },
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200
+                        }
+                    }
+                ]
+            }
+            chart.hideLoading()
+            chart.setOption(option)
+        },
+        selectMonth(params) {
+            let filterParam = params.name.split('-')
+            let result = this.reims.filter((reim) => {
+                let date = formatDate(reim.startDate).split('/')
+                if (date[0] === filterParam[0] && date[1] === filterParam[1]) {
+                    return true
+                }
+                return false
+            })
+            console.log(result)
         }
     }
 }
@@ -151,6 +201,15 @@ export default {
             .submit
                 margin-left: .1rem
     .content
+        .title
+            font-size: .14rem
+            margin-top: .3rem
         .charts
+            width: 100%
             height: 3rem
+            margin-top: -.4rem
+        .pie-chart
+            width: 100%
+            height: 6rem
+            margin-top: -1rem
 </style>

@@ -101,11 +101,18 @@ export default {
     methods: {
         formatDate,
         getFindRequestion() {
-            if (!!this.daterange.length) {
+            if (this.daterange && !!this.daterange.length) {
                 this.param.startDate = new Date(this.daterange[0]).getTime() + ''
                 this.param.endDate = new Date(this.daterange[1]).getTime() + ''
             } else {
                 this.param.startDate = this.param.endDate = ''
+            }
+            if (!!this.param.id && isNaN(+this.param.id)) {
+                this.$message({
+                    type: 'error',
+                    message: '请输入正确点申请单编号'
+                })
+                return
             }
             this.$request
                 .post('/test/getFindRequestion')

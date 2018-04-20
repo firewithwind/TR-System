@@ -29,6 +29,11 @@ export default {
         return {
 
         }
+    },
+    created() {
+        if (!this.$store.state.user.id && !localStorage.user) {
+            this.$router.replace('/login')
+        }
     }
 }
 </script>

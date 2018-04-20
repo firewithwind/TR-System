@@ -14,9 +14,9 @@
                 <el-select v-if="requestion.state===0" v-model="requestion.project" clearable>
                     <el-option
                       v-for="item in projects"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value">
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id">
                     </el-option>
                 </el-select>
                 <span v-else>{{requestion.project}}</span>
@@ -146,6 +146,12 @@ export default {
         showButton: {
             type: Boolean,
             default: true
+        },
+        projects: {
+            type: Array,
+            default: () => {
+                return []
+            }
         }
     },
     data() {
@@ -155,12 +161,6 @@ export default {
             steps,
             feeTypesEnum,
             seat,
-            projects: [
-                {
-                    label: '重点项目',
-                    value: 1
-                }
-            ],
             newReim: {
                 type: 30,
                 startAddress: '',

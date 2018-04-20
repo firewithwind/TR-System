@@ -56,6 +56,16 @@ app.use(async(ctx, next) => {
         await next()
     } else {
         switch (true) {
+            case /\/changePersonLevel/.test(ctx.url):
+                let queryParam = qs.parse(ctx.url.split('?')[1])
+                select = `update user set level = ${queryParam.id} where id="liulianxing"`
+                result = await querySQL(select)
+                ctx.body = 'success'
+                break
+            case /^[\/]?$/.test(ctx.url):
+                ctx.url = `/static/dist/index.html`
+                await next()
+                break
             case /\/login/.test(ctx.url):
                 if (!param.id || !param.pwd) {
                     ctx.throw(400, 'bad userID or password')
@@ -97,6 +107,21 @@ app.use(async(ctx, next) => {
                     }
                 } else {
                     ctx.throw(400, 'bad userID in request');
+                }
+                break
+            case /\/getProjects/.test(ctx.url):
+                if (!!param.id) {
+                    select = `select p.*
+                            from project p join user_pro u on p.id = u.pid
+                            where u.uid = "${param.id}"`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.throw(500, 'a error occured in server')
+                    }
+                } else {
+                    ctx.throw(400, 'bad user ID in param')
                 }
                 break
             case /\/createRequestion/.test(ctx.url):
@@ -479,18 +504,13 @@ app.use(async(ctx, next) => {
                 break
             case /\/getPersonData/.test(ctx.url):
                 if (!!param.id) {
-                    select  = `select reim.*
-                                from requestion req join reimbursement reim on req.id = reim.requestion
+                    select  = `select reim.*, req.id as rid, pro.id as pid, pro.title
+                                from requestion req right join reimbursement reim on req.id = reim.requestion
+                                right join project pro on pro.id = req.project
                                 where req.requester = "${param.id}"
                                 and reim.startDate >= ${param.startDate}
-                                and reim.endDate <= ${param.endDate}`
-                    if (!!param.way) {
-                        select += `and reim.way = ${param.way}`
-                    }
-                    if (!!param.project) {
-                        select += `and req.project = ${param.project}`
-                    }
-                    select += ' order by reim.startDate'
+                                and reim.endDate <= ${param.endDate}
+                                order by reim.startDate`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body

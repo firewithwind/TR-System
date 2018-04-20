@@ -1,6 +1,6 @@
 <template>
     <div class="create-req">
-        <requestion :requestion="requestion" @operateRequestion="createRequestion"></requestion>
+        <requestion :requestion="requestion" @operateRequestion="createRequestion" :projects="projects"></requestion>
     </div>
 </template>
 <script>
@@ -21,13 +21,34 @@ export default {
                 destination: '',
                 description: '',
                 approver: []
-            }
+            },
+            projects: []
         }
+    },
+    created() {
+        this.getProjects()
     },
     mounted() {
         this.setRequestion()
     },
     methods: {
+        getProjects() {
+            this.$request
+                .post('/test/getProjects')
+                .send({
+                    id: this.$store.state.user.id || localStorage.user
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.projects = res.body
+                    }
+                })
+        },
         setRequestion() {
             if (!!this.$store.state.user.name) {
                 this.requestion = {
