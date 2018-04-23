@@ -103,7 +103,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body[0]
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad userID in request');
@@ -153,7 +153,7 @@ app.use(async(ctx, next) => {
                             id: result.body.insertId
                         }
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 }
                 break
@@ -166,7 +166,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body[0]
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad requestion ID in request');
@@ -181,7 +181,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad userID in request');
@@ -196,7 +196,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad userID in request');
@@ -235,7 +235,7 @@ app.use(async(ctx, next) => {
                         if (!!result.state) {
                             ctx.body = result.body
                         } else {
-                            ctx.body = result.msg
+                            ctx.throw(400, result.msg)
                         }
                     } else {
                         ctx.throw(400, 'you have no acception for remarking')
@@ -256,7 +256,7 @@ app.use(async(ctx, next) => {
                             msg: 'success'
                         }
                     } else {
-                        ctx.body = result.msg
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad params in request')
@@ -282,10 +282,7 @@ app.use(async(ctx, next) => {
                                     msg: 'success'
                                 }
                             } else {
-                                ctx.body = {
-                                    type: 1,
-                                    msg: result.msg
-                                }
+                                ctx.throw(400, result.msg)
                             }
                         }
                     } else {
@@ -321,10 +318,7 @@ app.use(async(ctx, next) => {
                             msg: 'success'
                         }
                     } else {
-                        ctx.body = {
-                            type: 1,
-                            msg: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad param in requestion')
@@ -337,10 +331,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
-                        ctx.body = {
-                            type: 0,
-                            msg: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad requestion id in param')
@@ -355,10 +346,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
-                        ctx.body = {
-                            type: 0,
-                            msg: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad userID in param')
@@ -407,10 +395,7 @@ app.use(async(ctx, next) => {
                         acount: sitem.body[0] ? sitem.body[0]['count(*)'] : 0
                     }
                 } else {
-                    ctx.body = {
-                        type: 0,
-                        msg: result.msg || sitem.msg
-                    }
+                    ctx.throw(400, result.msg)
                 }
                 break
             case /\/deleteReim/.test(ctx.url):
@@ -423,10 +408,7 @@ app.use(async(ctx, next) => {
                             msg: 'success'
                         }
                     } else {
-                        ctx.body = {
-                            type: 0,
-                            msg: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad reimbursement id in param')
@@ -451,10 +433,7 @@ app.use(async(ctx, next) => {
                             }
                         } else {
                             fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl))
-                            ctx.body = {
-                                type: 0,
-                                msg: result.body.create.msg
-                            }
+                            ctx.throw(400, result.body.create.msg)
                         }
                     } else {
                         ctx.throw(500, 'can not upload the picture')
@@ -470,10 +449,7 @@ app.use(async(ctx, next) => {
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
-                        ctx.body = {
-                            type: 0,
-                            msg: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad requestion id in param')
@@ -495,10 +471,7 @@ app.use(async(ctx, next) => {
                             message: 'success'
                         }
                     } else {
-                        ctx.body = {
-                            type: 0,
-                            message: result.msg
-                        }
+                        ctx.throw(400, result.msg)
                     }
                 }
                 break
@@ -519,6 +492,23 @@ app.use(async(ctx, next) => {
                     }
                 } else {
                     ctx.throw(400, 'bad user id in param')
+                }
+                break
+            case /\/getRangeYearData/.test(ctx.url):
+                if (!!param.start || !!param.end) {
+                    select = `select reim.*, req.id as rid, pro.id as pid, pro.title
+                            from requestion req right join reimbursement reim on req.id = reim.requestion
+                            right join project pro on pro.id = req.project
+                            where reim.startDate >= ${param.start} and reim.endDate <=${param.end}
+                            order by reim.startDate`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.throw(400, result.msg)
+                    }
+                } else {
+                    ctx.throw(400, 'bad date in param')
                 }
                 break
             case /\/exportReim/.test(ctx.url):

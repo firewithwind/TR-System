@@ -12,8 +12,8 @@
                     <el-menu-item index="byyear">
                         <span slot="title">年度查询</span>
                     </el-menu-item>
-                    <el-menu-item index="bymonth">
-                        <span slot="title">月份查询</span>
+                    <el-menu-item index="byproject">
+                        <span slot="title">项目查询</span>
                     </el-menu-item>
                 </el-menu>
             </el-aside>
@@ -39,6 +39,11 @@ export default {
 </script>
 <style lang="stylus" scoped>
 .statistics
+    .el-aside
+        position: fixed
+        top: .61rem
+        left: 0
     .el-main
+        margin-left: 3rem
         margin-top: .2rem
 </style>

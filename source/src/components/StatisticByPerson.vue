@@ -20,28 +20,36 @@
         <div class="content">
             <p class="title">个人按月报销统计（单位：￥）</p>
             <div class="charts" ref="chart"></div>
+            <statistic-infor :reims="person_month_reims"></statistic-infor>
             <p class="title">个人项目报销统计（单位：￥）</p>
             <div class="charts" ref="chart2"></div>
+            <statistic-infor :reims="person_project_reims"></statistic-infor>
             <p class="title">个人消费类型报销统计（单位：￥）</p>
             <div class="pie-chart" ref="chart3"></div>
+            <statistic-infor class="last-infor" :reims="person_type_reims"></statistic-infor>
         </div>
     </div>
 </template>
 <script>
-import {feeTypes} from '@/dataMap'
-import {formatDate} from '@/utils'
-import {getMonthAbs, setPersonMonthsChartsData, setPersonProjectsChatsData, setPersonTypeChartsData} from '@/utils/statisticsDataHandle'
+import {formatDate, formatTime} from '@/utils'
+import {getMonthAbs, setPersonMonthsChartsData, setProjectsChatsData, setTypeChartsData} from '@/utils/statisticsDataHandle'
+import StatisticInfor from '@/components/StatisticInfor'
 
 export default {
+    components: {
+        StatisticInfor
+    },
     data() {
         return {
-            feeTypes,
             param: {
                 id: '',
                 dateRange: []
             },
             projects: [],
             reims: [],
+            person_month_reims: [],
+            person_project_reims: [],
+            person_type_reims: [],
             chartByMonth: [],
             pickerOptions: {
                 disabledDate: (date) => {
@@ -57,6 +65,8 @@ export default {
         this.chartByMonth[2] = this.$chart.init(this.$refs.chart3, 'light')
         this.getPersonData(this.chartByMonth)
         this.chartByMonth[0].on('click', this.selectMonth)
+        this.chartByMonth[1].on('click', this.selectProject)
+        this.chartByMonth[2].on('click', this.selectType)
         window.onresize = () => {
             this.chartByMonth.forEach(chart => {
                 chart.resize()
@@ -64,6 +74,8 @@ export default {
         }
     },
     methods: {
+        formatDate,
+        formatTime,
         getPersonData(charts) {
             let body = {}
             body.id = this.param.id || this.$store.state.user.id || localStorage.user
@@ -84,16 +96,21 @@ export default {
                 })
                 .end((err, res) => {
                     if (!!err) {
-                        console.log(err)
+                        this.$error(err.response.text)
                     } else {
-                        console.log(111)
+                        if (res.body && res.body.length === 0) {
+                            this.$message({
+                                type: 'warning',
+                                message: '没有数据哦~'
+                            })
+                        }
                         this.reims = res.body
                         getMonthAbs(body.startDate, body.endDate)
                         .then((res) => {
                             this.createPersonOption(res, setPersonMonthsChartsData(this.reims, res), 'line', charts[0], {})
                         })
-                        let result1 = setPersonProjectsChatsData(res.body)
-                        let result2 = setPersonTypeChartsData(res.body)
+                        let result1 = setProjectsChatsData(res.body)
+                        let result2 = setTypeChartsData(res.body)
                         this.createPersonOption(result1.x, result1.data, 'bar', charts[1], {})
                         this.createPersonPieOption(result2, charts[2])
                     }
@@ -179,7 +196,27 @@ export default {
                 }
                 return false
             })
-            console.log(result)
+            this.person_month_reims = result
+        },
+        selectProject(params) {
+            let filterParam = params.name.split(':')
+            let result = this.reims.filter((reim) => {
+                if (reim.pid === +filterParam[0]) {
+                    return true
+                }
+                return false
+            })
+            this.person_project_reims = result
+        },
+        selectType(params) {
+            let filterParam = params.name.split(':')
+            let result = this.reims.filter((reim) => {
+                if (reim.type === +filterParam[0]) {
+                    return true
+                }
+                return false
+            })
+            this.person_type_reims = result
         }
     }
 }
@@ -203,13 +240,15 @@ export default {
     .content
         .title
             font-size: .14rem
-            margin-top: .3rem
+            margin-top: .5rem
         .charts
             width: 100%
             height: 3rem
             margin-top: -.4rem
         .pie-chart
             width: 100%
-            height: 6rem
+            height: 5rem
             margin-top: -1rem
+        .last-infor
+            margin-top: -.5rem
 </style>

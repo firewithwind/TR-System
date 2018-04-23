@@ -53,8 +53,10 @@
                     label="止点">
                 </el-table-column>
                 <el-table-column
-                    prop="seat"
                     label="席别">
+                    <template slot-scope="scope">
+                        {{setSeat(scope.row.type, scope.row.seat)}}
+                    </template>
                 </el-table-column>
                 <el-table-column
                     prop="desc"
@@ -288,6 +290,9 @@ export default {
     methods: {
         formatTime,
         formatDate,
+        setSeat(type, s) {
+            return seat[type][s].label
+        },
         exportReim() {
             this.$request
                 .post('/test/exportReim')

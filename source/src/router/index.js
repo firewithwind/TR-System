@@ -14,7 +14,7 @@ import ReimDetail from '@/components/ReimDetail'
 import Detail from '@/components/Detail'
 import Statistics from '@/components/Statistics'
 import StatisticByYear from '@/components/StatisticByYear'
-import StatisticByMonth from '@/components/StatisticByMonth'
+import StatisticByProject from '@/components/StatisticByProject'
 import StatisticByPerson from '@/components/StatisticByPerson'
 import Login from '@/components/Login'
 
@@ -87,8 +87,8 @@ export default new Router({
                     component: StatisticByYear
                 },
                 {
-                    path: 'bymonth',
-                    component: StatisticByMonth
+                    path: 'byproject',
+                    component: StatisticByProject
                 },
                 {
                     path: 'byperson',

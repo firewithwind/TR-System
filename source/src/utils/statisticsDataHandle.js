@@ -29,6 +29,21 @@ export function getMonthAbs(start, end) {
                 reject(new Error('can not create sbscissa'))
             })
 }
+export function getYearAbs(start, end) {
+    return new Promise((resolve, reject) => {
+        if (!!start && !!end && start <= end) {
+            let sbscissa = []
+            start = new Date(+start).getFullYear()
+            end = new Date(+end).getFullYear()
+            for (let i = start; i <= end; i++) {
+                sbscissa.push(i)
+            }
+            resolve(sbscissa)
+        } else {
+            resolve([])
+        }
+    })
+}
 // 计算月份范围内个人统计数据
 export function setPersonMonthsChartsData(data, l) {
     let result = new Array(l.length).fill(0)
@@ -41,8 +56,8 @@ export function setPersonMonthsChartsData(data, l) {
     }
     return result
 }
-// 计算月份范围内个人项目统计
-export function setPersonProjectsChatsData(data) {
+// 计算时间范围内项目统计
+export function setProjectsChatsData(data) {
     let result = {
         x: [],
         data: []
@@ -58,17 +73,17 @@ export function setPersonProjectsChatsData(data) {
     })
     return result
 }
-// 计算月份范围内个人消费类型统计
-export function setPersonTypeChartsData(data) {
+// 计算时间范围消费类型统计
+export function setTypeChartsData(data) {
     let x = []
     let result = []
     data.forEach((item) => {
-        let index = x.indexOf(feeTypesEnum[item.type])
+        let index = x.indexOf(`${item.type}:${feeTypesEnum[item.type]}`)
         if (index === -1) {
-            x.push(feeTypesEnum[item.type])
+            x.push(`${item.type}:${feeTypesEnum[item.type]}`)
             result.push({
                 value: +item.money,
-                name: feeTypesEnum[item.type]
+                name: `${item.type}:${feeTypesEnum[item.type]}`
             })
         } else {
             result[index].value += +item.money
@@ -78,4 +93,16 @@ export function setPersonTypeChartsData(data) {
         x: x,
         result: result
     }
+}
+// 计算年度范围内个人统计
+export function setYearData(data, l) {
+    let result = new Array(l.length).fill(0)
+    data.forEach((item) => {
+        let year = new Date(+item.startDate).getFullYear()
+        let index = l.indexOf(year)
+        if (index !== -1) {
+            result[index] += +item.money
+        }
+    })
+    return result
 }
