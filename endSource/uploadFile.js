@@ -37,7 +37,7 @@ function getSuffixName(fileName) {
  * @param  {object} options 文件上传参数 fileType文件类型， path文件存放路径
  * @return {promise}
  */
-function uploadFile(ctx, options) {
+function uploadFile(ctx, options, secondPath) {
     let req = ctx.req
     let res = ctx.res
     let busboy = new Busboy({ headers: req.headers })
@@ -66,7 +66,7 @@ function uploadFile(ctx, options) {
                 result.success = true
                 result.message = '文件上传成功'
                 result.data = {
-                    pictureUrl: `invoice/${fileName}`
+                    pictureUrl: `${secondPath}/${fileName}`
                 }
                 resolve(result)
             })

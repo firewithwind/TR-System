@@ -55,11 +55,10 @@ export default {
     methods: {
         formatDate,
         getUndoneRequestion() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getUndoneRequestion')
-                .send({
-                    id: this.$store.state.user.id
-                })
+                .set('Authorization', `Bearer ${token}`)
                 .end((err, res) => {
                     if (!!err) {
                         this.requestions = []
@@ -78,10 +77,11 @@ export default {
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
+                    let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
                     this.$request
                         .post('/test/deleteRequestion')
+                        .set('Authorization', `Bearer ${token}`)
                         .send({
-                            uid: this.$store.state.user.id,
                             id: id
                         })
                         .end((err, res) => {

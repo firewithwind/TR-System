@@ -44,31 +44,45 @@ export function getYearAbs(start, end) {
         }
     })
 }
-// 计算月份范围内个人统计数据
+// 计算月份范围内统计数据
 export function setPersonMonthsChartsData(data, l) {
     let result = new Array(l.length).fill(0)
-    for (let item of data) {
+    let allResult = new Array(l.length).fill(0)
+    data.forEach((item) => {
         let date = formatDate(item.startDate).split('/')
         let position = l.indexOf(date[0] + '-' + date[1])
         if (position !== -1) {
-            result[position] += Number(item.money)
+            allResult[position] += Number(item.money)
+            if (item.state >= 4) {
+                result[position] += Number(item.money)
+            }
         }
+    })
+    return {
+        result: result,
+        allResult: allResult
     }
-    return result
 }
 // 计算时间范围内项目统计
 export function setProjectsChatsData(data) {
     let result = {
         x: [],
-        data: []
+        data: [],
+        allData: []
     }
     data.forEach((item) => {
         let index = result.x.indexOf(`${item.pid}:${item.title}`)
         if (index === -1) {
             result.x.push(`${item.pid}:${item.title}`)
-            result.data.push(+item.money)
+            result.allData.push(+item.money)
+            if (item.state >= 4) {
+                result.data.push(+item.money)
+            }
         } else {
-            result.data[index] += +item.money
+            result.allData[index] += +item.money
+            if (item.state >= 4) {
+                result.data[index] += +item.money
+            }
         }
     })
     return result
@@ -97,12 +111,19 @@ export function setTypeChartsData(data) {
 // 计算年度范围内个人统计
 export function setYearData(data, l) {
     let result = new Array(l.length).fill(0)
+    let allResult = new Array(l.length).fill(0)
     data.forEach((item) => {
         let year = new Date(+item.startDate).getFullYear()
         let index = l.indexOf(year)
         if (index !== -1) {
-            result[index] += +item.money
+            allResult[index] += +item.money
+            if (item.state >= 4) {
+                result[index] += +item.money
+            }
         }
     })
-    return result
+    return {
+        allResult: allResult,
+        result: result
+    }
 }

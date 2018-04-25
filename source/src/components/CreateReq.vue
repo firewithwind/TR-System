@@ -33,11 +33,10 @@ export default {
     },
     methods: {
         getProjects() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getProjects')
-                .send({
-                    id: this.$store.state.user.id || localStorage.user
-                })
+                .set('Authorization', `Bearer ${token}`)
                 .end((err, res) => {
                     if (!!err) {
                         this.$message({
@@ -58,17 +57,22 @@ export default {
                     state: 0
                 }
             } else {
-                let id = localStorage.getItem('user')
-                if (!!id) {
+                let token = this.$store.state.token || (localStorage.token && localStorage.token.slice(0, -5))
+                if (!!token) {
                     this.$request
                         .post('/test/getUserInfor')
-                        .send({
-                            id: id
-                        })
+                        .set('Authorization', `Bearer ${token}`)
                         .set('accept', 'json')
                         .end((err, res) => {
                             if (!!err) {
-                                console.log(err)
+                                if (err.status === 401) {
+                                    this.$router.replace('/login')
+                                } else {
+                                    this.$message({
+                                        type: 'error',
+                                        message: err.response.text
+                                    })
+                                }
                                 return
                             }
                             this.requestion = {
@@ -80,11 +84,12 @@ export default {
                             this.$store.commit('setUser', res.body)
                         })
                 } else {
-                    localStorage.setItem('user', '00000001')
+                    this.$router.replace('/login')
                 }
             }
         },
         createRequestion(requestion) {
+            let token = this.$store.state.token || (localStorage.token && localStorage.token.slice(0, -5))
             if (!this.requestion.name) {
                 this.$message({
                     message: '发生错误，请刷新页面',
@@ -108,9 +113,9 @@ export default {
             } else {
                 this.$request
                     .post('/test/createRequestion')
+                    .set('Authorization', `Bearer ${token}`)
                     .send({
                         ...this.requestion,
-                        requester: this.$store.state.user.id,
                         startTime: new Date(this.requestion.dataRange[0]).getTime(),
                         endTime: new Date(this.requestion.dataRange[1]).getTime(),
                         dataRange: null
@@ -118,7 +123,14 @@ export default {
                     .set('accept', 'json')
                     .end((err, res) => {
                         if (!!err) {
-                            console.log(err)
+                            if (err.status === 401) {
+                                this.$router.push('/login')
+                            } else {
+                                this.$message({
+                                    type: 'error',
+                                    message: err.response.text
+                                })
+                            }
                             return
                         }
                         if (res.status >= 200 && res.status < 300) {

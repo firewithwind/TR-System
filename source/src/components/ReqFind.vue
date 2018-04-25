@@ -114,8 +114,10 @@ export default {
                 })
                 return
             }
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getFindRequestion')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     ...this.param,
                     user: this.$store.state.user.id,

@@ -31,8 +31,10 @@ export default {
     },
     methods: {
         getRequestionDetail(id) {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getRequestionDetail')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: id
                 })
@@ -41,7 +43,7 @@ export default {
                         console.log(err)
                     } else {
                         this.requestion = res.body
-                        this.requestion.approver = this.requestion.approver.split(',')
+                        this.requestion.approver = this.requestion.approver && this.requestion.approver.split(',')
                     }
                 })
         },
@@ -52,8 +54,10 @@ export default {
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
+                    let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
                     this.$request
                         .post('/test/deleteRequestion')
+                        .set('Authorization', `Bearer ${token}`)
                         .send({
                             uid: this.$store.state.user.id,
                             id: this.requestion.id
@@ -78,8 +82,10 @@ export default {
             }
         },
         remark(ope, reason) {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/approveRequestion')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,

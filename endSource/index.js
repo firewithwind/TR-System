@@ -1,13 +1,19 @@
 const koa = require('koa');
 const koaBody = require('koa-body')
+const ws = require('socket.io')
 const mysql = require('mysql')
 const config = require('./config')
 const path = require('path')
+const jwt = require('jsonwebtoken')
+const jwtKoa = require('koa-jwt')
+const util = require('util')
+const verify = util.promisify(jwt.verify)
 const static = require('koa-static')
 const { uploadFile } = require('./uploadFile.js')
 const fs = require('fs')
 const qs = require('querystring')
 const { createPersonReim } = require('./utils/index.js')
+const secret = `${Date.now()}`
 
 const app = new koa();
 
@@ -18,7 +24,6 @@ connection.connect(function(err) {
         console.error('error connecting: ' + err.stack);
         return;
     }
-
     console.log('connected as id ' + connection.threadId);
 });
 
@@ -46,15 +51,24 @@ const fileType = [
 ]
 
 app.use(koaBody())
-
+app.use(jwtKoa({secret}).unless({
+    path: [/\/login/, /\/register/, /^[\/]?$/, /\/static/] //数组中的路径不需要通过jwt验证
+}))
 app.use(async(ctx, next) => {
     let param = ctx.request.body
     let select = null,
-        result = null
+        result = null,
+        token = null
     let extendName = ctx.url.split('.').slice(-1)[0]
+    // 验证获取token信息
     if (fileType.indexOf(extendName) !== -1) {
         await next()
     } else {
+        let tokenResult
+        let reqToken = ctx.header.authorization && ctx.header.authorization.split(' ')[1]
+        if (!!reqToken) {
+            tokenResult = await verify(reqToken, secret)
+        }
         switch (true) {
             case /\/changePersonLevel/.test(ctx.url):
                 let queryParam = qs.parse(ctx.url.split('?')[1])
@@ -70,12 +84,18 @@ app.use(async(ctx, next) => {
                 if (!param.id || !param.pwd) {
                     ctx.throw(400, 'bad userID or password')
                 } else {
-                        select = `select * from user where id = "${param.id}" or phone = "${param.id}" and pwd = "${param.pwd}"`
+                        select = `select id, name, phone, Email, level, avatar, laboratory
+                        from user where id = "${param.id}" or phone = "${param.id}" and pwd = "${param.pwd}"`
                         result = await querySQL(select)
                         if (!result.state) {
                             ctx.throw(400, result.msg)
                         } else {
-                            ctx.body = result.body[0]
+                            let userToken = {...result.body[0]}
+                            token = jwt.sign(userToken, secret, {expiresIn: '10h'})
+                            ctx.body = {
+                                result: result.body[0],
+                                token
+                            }
                         }
                 }
                 break
@@ -97,8 +117,8 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getUserInfor/.test(ctx.url):
-                if (!!param.id) {
-                    select = `select * from user where id = "${param.id}"`
+                if (!!tokenResult.id) {
+                    select = `select * from user where id = "${tokenResult.id}"`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body[0]
@@ -109,11 +129,60 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'bad userID in request');
                 }
                 break
+            case /\/updateUserInfor/.test(ctx.url):
+                if (tokenResult.id === param.id) {
+                    select = `update user
+                            set name = "${param.name}",
+                                phone = "${param.phone}",
+                                Email = "${param.Email}",
+                                laboratory = "${param.laboratory}"`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            msg: 'success'
+                        }
+                    } else {
+                        ctx.throw(400, 'update filed')
+                    }
+                } else {
+                    ctx.throw(400, 'you can not update others information')
+                }
+                break
+            case /\/uploadUserAvatar/.test(ctx.url):
+                var serverFilePath = path.join( __dirname, 'static/avatar')
+                // 上传文件事件
+                result = await uploadFile( ctx, {
+                    fileType: 'album',
+                    path: serverFilePath
+                }, 'avatar')
+                if (!!result.data.pictureUrl) {
+                    select = `update user set avatar = "http://${ctx.host}/static/${result.data.pictureUrl}" where id = "${tokenResult.id}"`
+                    result.data.create = await querySQL(select)
+                    if (!!result.data.create.state) {
+                        // 删除原头像
+                        if (!!tokenResult.avatar) {
+                            fs.unlink(path.resolve(__dirname, 'static/' + tokenResult.avatar.split('static/')[1]), (err) => {
+                                console.log(err)
+                            })
+                        }
+                        ctx.body = {
+                            url: `http://${ctx.host}/static/${result.data.pictureUrl}`
+                        }
+                    } else {
+                        fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl), (err) => {
+                            console.log(err)
+                        })
+                        ctx.throw(400, result.body.create.msg)
+                    }
+                } else {
+                    ctx.throw(500, 'can not upload the picture')
+                }
+                break
             case /\/getProjects/.test(ctx.url):
-                if (!!param.id) {
+                if (!!tokenResult.id) {
                     select = `select p.*
                             from project p join user_pro u on p.id = u.pid
-                            where u.uid = "${param.id}"`
+                            where u.uid = "${tokenResult.id}"`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -131,8 +200,6 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'bad request body of startTime')
                 } else if (!param.endTime) {
                     ctx.throw(400, 'bad request body of endTime')
-                } else if (!param.requester) {
-                    ctx.throw(400, 'bad request body of requester')
                 } else if (!param.way) {
                     ctx.throw(400, 'bad request body of way')
                 } else if (!param.destination) {
@@ -140,7 +207,7 @@ app.use(async(ctx, next) => {
                 } else {
                     select = 'insert into requestion values(NULL, 1,' +
                         param.project + ',"' +
-                        param.requester + '","' +
+                        param.user + '","' +
                         Date.now() + '","' +
                         param.startTime + '","' +
                         param.endTime + '",' +
@@ -173,10 +240,10 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getUndoneRequestion/.test(ctx.url):
-                if (!!param.id) {
+                if (!!tokenResult.id) {
                     select = `select *
                             from requestion
-                            where requester="${param.id}" and state<2`
+                            where requester="${tokenResult.id}" and state<2`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -188,10 +255,10 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getUndoneReimbursement/.test(ctx.url):
-                if (!!param.id) {
+                if (!!tokenResult.id) {
                     select = `select *
                             from requestion
-                            where requester="${param.id}" and state>=3 and state<5`
+                            where requester="${tokenResult.id}" and state>=3 and state<5`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -203,20 +270,8 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getUnremarkRequestion/.test(ctx.url):
-                if (!!param.id) {
-                    select = `select level
-                            from user
-                            where id="${param.id}"`
-                    var queryRes = await querySQL(select)
-                    if (!!queryRes.state) {
-                        if(queryRes.body.length > 0) {
-                            var level = queryRes.body[0].level
-                        } else {
-                            ctx.throw(500, 'unexcept error')
-                        }
-                    } else {
-                        ctx.throw(400, 'no this user')
-                    }
+                if (!!tokenResult.id) {
+                    var level = tokenResult.level
                     if (level == 1) {
                         select = `select *
                                 from user u join requestion r on r.requester=u.id
@@ -245,10 +300,16 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/deleteRequestion/.test(ctx.url):
-                if (param.id && param.uid) {
-                    select = `delete
-                            from requestion
-                            where id=${param.id} and requester="${param.uid}"`
+                if (!!param.id) {
+                    if (tokenResult.level >= 3) {
+                        select = `delete
+                                from requestion
+                                where id = ${param.id}`
+                    } else {
+                        select = `delete
+                                from requestion
+                                where id=${param.id} and requester="${tokenResult.id}"`
+                    }
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -294,6 +355,12 @@ app.use(async(ctx, next) => {
                 break
             case /\/addReimbursement/.test(ctx.url):
                 if (!!param.requestion) {
+                    let seat
+                    if (!!param.seat) {
+                        seat = `"${param.seat}"`
+                    } else {
+                        seat = null
+                    }
                     select = [`insert
                             into reimbursement
                             values(NULL,
@@ -307,7 +374,7 @@ app.use(async(ctx, next) => {
                             "${param.endAddress}",
                             "${param.endDate}",
                             "${param.endTime}",
-                            "${param.seat}",
+                            ${seat},
                             "${param.desc}",
                             NULL, NULL, "${param.note}"
                             )`, `update requestion set state=3 where id=${param.requestion}`]
@@ -338,10 +405,10 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getCreatableReim/.test(ctx.url):
-                if (!!param.id ) {
+                if (!!tokenResult.id) {
                     select = `select *
                             from user u join requestion r on u.id=r.requester
-                            where r.requester="${param.id}" and state>=2 and state <3`
+                            where r.requester="${tokenResult.id}" and state>=2 and state <3`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -415,14 +482,14 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/uploadInvoice\?requestion=[/m/M]*/.test(ctx.url):
-                let serverFilePath = path.join( __dirname, 'static/invoice')
+                var serverFilePath = path.join( __dirname, 'static/invoice')
                 // 上传文件事件
-                let query = qs.parse(ctx.url.split('?')[1])
+                var query = qs.parse(ctx.url.split('?')[1])
                 if (!!query.requestion) {
                     result = await uploadFile( ctx, {
                         fileType: 'album',
                         path: serverFilePath
-                    })
+                    }, 'invoice')
                     if (!!result.data.pictureUrl) {
                         select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}", "${Date.now()}")`
                         result.data.create = await querySQL(select)
@@ -432,7 +499,9 @@ app.use(async(ctx, next) => {
                                 url: `http://${ctx.host}/static/${result.data.pictureUrl}`
                             }
                         } else {
-                            fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl))
+                            fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl), (err) => {
+                                console.log(err)
+                            })
                             ctx.throw(400, result.body.create.msg)
                         }
                     } else {
@@ -458,11 +527,15 @@ app.use(async(ctx, next) => {
             case /\/deleteInvoice/.test(ctx.url):
                 if (!!param.id) {
                     let _savePath = path.resolve(__dirname, 'static/', param.url.split('static/')[1])
-                    fs.unlink(_savePath, (err) => {
-                        if (err) {
-                            ctx.throw(400, 'can not delete the file')
-                        }
-                    })
+                    try {
+                        fs.unlink(_savePath, (err) => {
+                            if (err) {
+                                ctx.throw(400, 'can not delete the file')
+                            }
+                        })
+                    } catch(e) {
+                        console.log(e)
+                    }
                     select = `delete from invoice where id=${param.id}`
                     result = await querySQL(select)
                     if (!!result.state) {
@@ -475,40 +548,31 @@ app.use(async(ctx, next) => {
                     }
                 }
                 break
-            case /\/getPersonData/.test(ctx.url):
-                if (!!param.id) {
-                    select  = `select reim.*, req.id as rid, pro.id as pid, pro.title
-                                from requestion req right join reimbursement reim on req.id = reim.requestion
-                                right join project pro on pro.id = req.project
-                                where req.requester = "${param.id}"
-                                and reim.startDate >= ${param.startDate}
-                                and reim.endDate <= ${param.endDate}
-                                order by reim.startDate`
-                    result = await querySQL(select)
-                    if (!!result.state) {
-                        ctx.body = result.body
-                    } else {
-                        ctx.throw(400, result.msg)
-                    }
-                } else {
-                    ctx.throw(400, 'bad user id in param')
-                }
-                break
-            case /\/getRangeYearData/.test(ctx.url):
-                if (!!param.start || !!param.end) {
-                    select = `select reim.*, req.id as rid, pro.id as pid, pro.title
+            case /\/getStatisticDate/.test(ctx.url):
+                select = `select reim.*, req.id as rid, req.state, pro.id as pid, pro.title, u.name
                             from requestion req right join reimbursement reim on req.id = reim.requestion
                             right join project pro on pro.id = req.project
-                            where reim.startDate >= ${param.start} and reim.endDate <=${param.end}
-                            order by reim.startDate`
-                    result = await querySQL(select)
-                    if (!!result.state) {
-                        ctx.body = result.body
-                    } else {
-                        ctx.throw(400, result.msg)
-                    }
+                            right join user u on req.requester = u.id
+                            where`
+                if (!!param.id) {
+                    select += ` u.id = "${param.id}" and`
+                }
+                if (!!param.project) {
+                    select += ` pro.id = ${param.project} and`
+                }
+                if (!!param.laboratory) {
+                    select += ` u.laboratory = "${param.laboratory}" and`
+                }
+                if (!!param.start && !!param.end) {
+                    select += ` reim.startDate >= ${param.start} and reim.endDate <= ${param.end}`
                 } else {
-                    ctx.throw(400, 'bad date in param')
+                    ctx.throw(400, 'bad params for search')
+                }
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = result.body
+                } else {
+                    ctx.throw(500, result.msg)
                 }
                 break
             case /\/exportReim/.test(ctx.url):
@@ -541,7 +605,9 @@ app.use(async(ctx, next) => {
 
 app.use(static(__dirname, 'static'))
 
-app.listen(3000)
+let httpServer = app.listen(3000, () => {
+    console.log('server listening 3000...')
+})
 
 // 执行查询函数
 function querySQL(select) {

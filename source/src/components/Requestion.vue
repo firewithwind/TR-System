@@ -7,7 +7,7 @@
             <el-form-item label="申请人:">
                 {{requestion.name}}
             </el-form-item>
-            <el-form-item label="实验室:">
+            <el-form-item label="研究室:">
                 {{requestion.laboratory}}
             </el-form-item>
             <el-form-item label="所属项目:">

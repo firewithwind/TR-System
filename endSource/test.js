@@ -1,8 +1,8 @@
-const xlsx = require('xlsx-style')
+const jwt = require('jsonwebtoken')
+const Koa = require('koa')
+const verify = require('util').promisify(jwt.verify)
+console.log(verify)
 
-let workbook = xlsx.readFile('./excelModel.xlsx', {
-    cellStyles: true
-})
+const app = new Koa()
 
-let sheet = workbook.Sheets[workbook.SheetNames[0]]
-console.log(sheet['!rows'])
+

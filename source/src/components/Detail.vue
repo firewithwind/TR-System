@@ -34,8 +34,10 @@ export default {
     methods: {
         formatDate,
         getInvoices() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getInvoices')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     requestion: this.requestion.id
                 })
@@ -48,8 +50,10 @@ export default {
                 })
         },
         getRequestionDetail(id, callback = undefined) {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getRequestionDetail')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: id
                 })
@@ -63,6 +67,7 @@ export default {
                 })
             this.$request
                 .post('/test/getReimbursements')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: id
                 })

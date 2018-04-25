@@ -60,12 +60,15 @@
                 </el-table-column>
                 <el-table-column
                     prop="desc"
-                    label="费用描述"
-                    width="180">
+                    label="费用描述">
                 </el-table-column>
                 <el-table-column
                     prop="money"
                     label="金额">
+                </el-table-column>
+                <el-table-column
+                    prop="note"
+                    label="备注">
                 </el-table-column>
                 <el-table-column
                     v-if="requestion.state>=2&&requestion.state<4&&!isRemark"
@@ -93,6 +96,7 @@
                     v-show="requestion.state>=2&&requestion.state<=3&&!isRemark&&isSelf"
                     :action="'/test/uploadInvoice?requestion=' + requestion.id"
                     list-type="picture-card"
+                    :headers="uploadHeaders"
                     accept="image/*"
                     :on-preview="handlePictureCardPreview"
                     :on-remove="handleRemove">
@@ -285,17 +289,27 @@ export default {
         },
         isSelf() {
             return this.$store.state.user.id === this.requestion.requester
+        },
+        uploadHeaders() {
+            return {
+                Authorization: 'Bearer ' + (this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5)))
+            }
         }
     },
     methods: {
         formatTime,
         formatDate,
         setSeat(type, s) {
-            return seat[type][s].label
+            if (!!s) {
+                return seat[type][s].label
+            }
+            return ''
         },
         exportReim() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/exportReim')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: this.requestion.id
                 })
@@ -348,12 +362,17 @@ export default {
                     url: file.url
                 }
             }
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/deleteInvoice')
+                .set('Authorization', `Bearer ${token}`)
                 .send(body)
                 .end((err, res) => {
                     if (err) {
-                        console.log(err)
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
                     } else {
                         if (index !== undefined) {
                             this.$emit('removeInvoice', index)

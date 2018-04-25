@@ -54,11 +54,10 @@ export default {
     methods: {
         formatDate,
         getUndoneReimbursement() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getUndoneReimbursement')
-                .send({
-                    id: this.$store.state.user.id
-                })
+                .set('Authorization', `Bearer ${token}`)
                 .end((err, res) => {
                     if (!!err) {
                         this.requestions = []

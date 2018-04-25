@@ -126,8 +126,9 @@ export default {
                                     checked: true
                                 })
                             }
-                            this.$store.commit('setUser', res.body)
-                            localStorage.setItem('user', res.body.id)
+                            this.$store.commit('setUser', res.body.result)
+                            this.$store.commit('setToken', res.body.token)
+                            localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
                             this.$router.push('/index')
                         }
                     })

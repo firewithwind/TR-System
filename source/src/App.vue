@@ -13,12 +13,12 @@
                 <el-menu-item class="main-page" index="/index">差旅报销</el-menu-item>
                 <el-menu-item index="/reimbursement/index/createreq">差旅报销</el-menu-item>
                 <el-menu-item index="/project">项目管理</el-menu-item>
-                <el-menu-item index="/statistics/index/byperson">数据统计</el-menu-item>
+                <el-menu-item index="/statistics">数据统计</el-menu-item>
                 <el-menu-item class="user-info" index="/userInfor">
                     <el-badge is-dot>
-                        <img class="logo" src="./assets/logo.png">
+                        <img class="logo" :src="$store.state.user.avatar">
                     </el-badge>
-                    <a href="user">{{user.name}}</a>
+                    <span>{{user.name}}</span>
                     <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
                 </el-menu-item>
             </el-menu>
@@ -35,30 +35,41 @@ export default {
   name: 'App',
     data() {
         return {
-            activeIndex: 'index',
-            user: {}
+            activeIndex: 'index'
+        }
+    },
+    computed: {
+        user() {
+            return this.$store.state.user
         }
     },
     created() {
-        let id = localStorage.getItem('user')
-        if (!id) {
+        let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+        if (!token) {
             this.$router.push('/login')
         } else {
             if (!this.$store.state.user.id) {
                 this.$request
                     .post('/test/getUserInfor')
-                    .send({
-                        id: id
-                    })
+                    .set('Authorization', 'Bearer ' + token)
                     .set('accept', 'json')
+                    // .send({})
                     .end((err, res) => {
                         if (!!err) {
-                            console.log(err)
+                            if (err.status === 401) {
+                                this.$router.push('login')
+                            } else {
+                                this.$message({
+                                    type: 'error',
+                                    message: err.response.text
+                                })
+                            }
                             return
                         }
-                        this.user = res.body
                         this.$store.commit('setUser', res.body)
                     })
+            } else {
+                this.user = this.$store.state.user
             }
         }
     }

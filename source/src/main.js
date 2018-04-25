@@ -24,6 +24,12 @@ const store = new Vuex.Store({
     mutations: {
         setUser(state, user) {
             state.user = user
+        },
+        setToken(state, token) {
+            state.token = token
+        },
+        setAvatar(state, url) {
+            state.user.avatar = url
         }
     }
 })

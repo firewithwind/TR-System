@@ -13,10 +13,8 @@ import ReimUnremark from '@/components/ReimUnremark'
 import ReimDetail from '@/components/ReimDetail'
 import Detail from '@/components/Detail'
 import Statistics from '@/components/Statistics'
-import StatisticByYear from '@/components/StatisticByYear'
-import StatisticByProject from '@/components/StatisticByProject'
-import StatisticByPerson from '@/components/StatisticByPerson'
 import Login from '@/components/Login'
+import User from '@/components/User'
 
 Vue.use(Router)
 
@@ -31,6 +29,11 @@ export default new Router({
             path: '/login',
             name: 'login',
             component: Login
+        },
+        {
+            path: '/userInfor',
+            name: 'userInfor',
+            component: User
         },
         {
             path: '/reimbursement/:id',
@@ -79,22 +82,8 @@ export default new Router({
             ]
         },
         {
-            path: '/statistics/:id',
-            component: Statistics,
-            children: [
-                {
-                    path: 'byyear',
-                    component: StatisticByYear
-                },
-                {
-                    path: 'byproject',
-                    component: StatisticByProject
-                },
-                {
-                    path: 'byperson',
-                    component: StatisticByPerson
-                }
-            ]
+            path: '/statistics',
+            component: Statistics
         }
     ]
 })

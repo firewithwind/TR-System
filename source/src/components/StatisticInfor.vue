@@ -9,6 +9,10 @@
                 width="50">
             </el-table-column>
             <el-table-column
+                label="申请人"
+                prop="name">
+            </el-table-column>
+            <el-table-column
                 label="费用类型">
                 <template slot-scope="scope">
                     {{feeTypesEnum[scope.row.type]}}
@@ -54,12 +58,15 @@
             </el-table-column>
             <el-table-column
                 prop="desc"
-                label="费用描述"
-                width="180">
+                label="费用描述">
             </el-table-column>
             <el-table-column
                 prop="money"
                 label="金额">
+            </el-table-column>
+            <el-table-column
+                prop="note"
+                label="备注">
             </el-table-column>
         </el-table>
     </div>
@@ -86,7 +93,10 @@ export default {
         formatDate,
         formatTime,
         setSeat(type, s) {
-            return seat[type][s].label
+            if (!!s) {
+                return seat[type][s].label
+            }
+            return ''
         }
     }
 }

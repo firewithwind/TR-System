@@ -42,11 +42,10 @@ export default {
     methods: {
         formatDate,
         getCreatableReim() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getCreatableReim')
-                .send({
-                    id: this.$store.state.user.id
-                })
+                .set('Authorization', `Bearer ${token}`)
                 .end((err, res) => {
                     if (!!err) {
                         console.log(err)
@@ -66,12 +65,14 @@ export default {
                         message: '请添加报销项'
                     })
                 } else {
+                    let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
                     rem.startDate = new Date(rem.startDate).getTime()
                     rem.startTime = new Date(rem.startTime).getTime()
                     rem.endDate = new Date(rem.startDate).getTime()
                     rem.endTime = new Date(rem.endTime).getTime()
                     this.$request
                         .post('/test/addReimbursement')
+                        .set('Authorization', `Bearer ${token}`)
                         .send({
                             requestion: this.requestion.id,
                             uid: this.$store.state.user.id,

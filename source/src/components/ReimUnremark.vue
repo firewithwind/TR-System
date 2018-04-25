@@ -58,8 +58,10 @@ export default {
     methods: {
         formatDate,
         getUnremarkRequestion() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getUnremarkRequestion')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: this.$store.state.user.id
                 })

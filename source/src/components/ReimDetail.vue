@@ -77,8 +77,10 @@ export default {
     methods: {
         formatDate,
         endInvoice() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/approveRequestion')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
@@ -102,8 +104,10 @@ export default {
             this.pics.splice(index, 1)
         },
         getInvoices() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getInvoices')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     requestion: this.requestion.id
                 })
@@ -119,8 +123,10 @@ export default {
             this.dialogVisible = false
         },
         remark() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/approveRequestion')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
@@ -142,8 +148,10 @@ export default {
             this.dialogVisible = false
         },
         getRequestionDetail(id, callback = undefined) {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/getRequestionDetail')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: id
                 })
@@ -159,6 +167,7 @@ export default {
                 })
             this.$request
                 .post('/test/getReimbursements')
+                .set('Authorization', `Bearer ${token}`)
                 .send({
                     id: id
                 })
@@ -174,19 +183,21 @@ export default {
             this.requestion = this.opts[val]
         },
         addNewReim(rem) {
-            if (this.$store.state.user.id === +this.requestion.requester) {
+            if (this.$store.state.user.id === this.requestion.requester) {
                 if (!rem) {
                     this.$message({
                         type: 'error',
                         message: '请添加报销项'
                     })
                 } else {
+                    let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
                     rem.startDate = new Date(rem.startDate).getTime()
                     rem.startTime = new Date(rem.startTime).getTime()
                     rem.endDate = new Date(rem.startDate).getTime()
                     rem.endTime = new Date(rem.endTime).getTime()
                     this.$request
                         .post('/test/addReimbursement')
+                        .set('Authorization', `Bearer ${token}`)
                         .send({
                             requestion: this.requestion.id,
                             uid: this.$store.state.user.id,
@@ -217,8 +228,10 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
+                let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
                 this.$request
                     .post('/test/deleteReim')
+                    .set('Authorization', `Bearer ${token}`)
                     .send({
                         id: id
                     })
