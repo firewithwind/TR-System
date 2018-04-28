@@ -1,4 +1,5 @@
 const qs = require('querystring')
+const io = require('socket.io-client')
 
 function tofixed(data) {
     return data.toString().length > 1 ? '' + data : '0' + data
@@ -24,4 +25,11 @@ export function query(url) {
 }
 export function paramString(param) {
     return qs.stringify(param)
+}
+// socket链接
+export function createSocket(url, query) {
+    let socket = io(url, {
+        query: query
+    })
+    return socket
 }

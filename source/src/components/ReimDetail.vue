@@ -84,6 +84,8 @@ export default {
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
+                    requester: this.requestion.requester,
+                    description: this.requestion.description,
                     state: this.requestion.state,
                     operate: 0,
                     reason: ''
@@ -130,6 +132,8 @@ export default {
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
+                    requester: this.requestion.requester,
+                    description: this.requestion.description,
                     state: this.requestion.state,
                     operate: this.remarkResult,
                     reason: this.reason

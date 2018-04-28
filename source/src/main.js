@@ -30,6 +30,14 @@ const store = new Vuex.Store({
         },
         setAvatar(state, url) {
             state.user.avatar = url
+        },
+        setSocket(state, socket) {
+            state.socket = socket
+        },
+        logout(state) {
+            delete state.token
+            delete state.user
+            delete state.socket
         }
     }
 })

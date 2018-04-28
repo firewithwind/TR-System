@@ -70,6 +70,7 @@
     </div>
 </template>
 <script>
+import {createSocket} from '@/utils'
 export default {
     data() {
         return {
@@ -126,6 +127,17 @@ export default {
                                     checked: true
                                 })
                             }
+                            let socket = createSocket('http://localhost:3000', {token: res.body.result.id})
+                            socket.on('message', (data) => {
+                                let message = JSON.parse(data)
+                                this.$notify.info({
+                                    title: '通知',
+                                    dangerouslyUseHTMLString: true,
+                                    message: message.data,
+                                    duration: 6000
+                                })
+                            })
+                            this.$store.commit('setSocket', socket)
                             this.$store.commit('setUser', res.body.result)
                             this.$store.commit('setToken', res.body.token)
                             localStorage.setItem('token', res.body.token + Math.random().toFixed(3))

@@ -16,10 +16,10 @@
                 <el-menu-item index="/statistics">数据统计</el-menu-item>
                 <el-menu-item class="user-info" index="/userInfor">
                     <el-badge is-dot>
-                        <img class="logo" :src="$store.state.user.avatar">
+                        <img class="logo" :src="$store.state.user&&$store.state.user.avatar||'http://localhost:3000/static/avatar/timg.jpeg'">
                     </el-badge>
-                    <span>{{user.name}}</span>
-                    <span v-if="!user.name"><span>登入</span>|<span>注册</span></span>
+                    <span>{{$store.state.user&&$store.state.user.name}}</span>
+                    <span v-if="!$store.state.user||!$store.state.user.name">请登入</span>
                 </el-menu-item>
             </el-menu>
         </el-header>
@@ -31,6 +31,7 @@
 </template>
 
 <script>
+import {createSocket} from '@/utils'
 export default {
   name: 'App',
     data() {
@@ -53,7 +54,6 @@ export default {
                     .post('/test/getUserInfor')
                     .set('Authorization', 'Bearer ' + token)
                     .set('accept', 'json')
-                    // .send({})
                     .end((err, res) => {
                         if (!!err) {
                             if (err.status === 401) {
@@ -66,6 +66,25 @@ export default {
                             }
                             return
                         }
+                        // 判断状态有无更新
+                        if (!!res.body.token) {
+                            localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
+                            token = res.body.token
+                        }
+                        let socket = createSocket('http://localhost:3000', {
+                            token: res.body.id
+                        })
+                        socket.on('message', (data) => {
+                            let message = JSON.parse(data)
+                            this.$notify.info({
+                                title: '通知',
+                                dangerouslyUseHTMLString: true,
+                                message: message.data,
+                                duration: 6000
+                            })
+                        })
+                        this.$store.commit('setSocket', socket)
+                        this.$store.commit('setToken', token)
                         this.$store.commit('setUser', res.body)
                     })
             } else {

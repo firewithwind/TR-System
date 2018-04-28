@@ -14,6 +14,7 @@ const fs = require('fs')
 const qs = require('querystring')
 const { createPersonReim } = require('./utils/index.js')
 const secret = `${Date.now()}`
+let spEnum = {}
 
 const app = new koa();
 
@@ -99,6 +100,21 @@ app.use(async(ctx, next) => {
                         }
                 }
                 break
+            case /\/logout/.test(ctx.url):
+                if (!!tokenResult.id) {
+                    if(!!io.sockets.connected[spEnum[tokenResult.id]]) {
+                        try {
+                            io.sockets.connected[spEnum[tokenResult.id]].disconnect(true)
+                        } catch(e) {
+
+                        }
+                        delete spEnum[tokenResult.id]
+                    }
+                    ctx.body = 'success'
+                } else {
+                    ctx.throw(400, 'not found')
+                }
+                break
             case /\/register/.test(ctx.url):
                 if (!param.id||!param.pwd||!param.name||!param.phone||!param.laboratory) {
                     ctx.throw(400, 'bad register information')
@@ -118,15 +134,50 @@ app.use(async(ctx, next) => {
                 break
             case /\/getUserInfor/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select * from user where id = "${tokenResult.id}"`
+                    select = `select id, name, phone, Email, level, avatar, laboratory
+                        from user where id = "${tokenResult.id}"`
                     result = await querySQL(select)
                     if (!!result.state) {
-                        ctx.body = result.body[0]
+                        if (tokenResult.level === result.body[0].level) {
+                            ctx.body = result.body[0]
+                        } else {
+                            let newToken = jwt.sign({...result.body[0]}, secret, {expiresIn: '10h'})
+                            ctx.body = {
+                                ...result.body[0],
+                                token: newToken
+                            }
+                        }
                     } else {
                         ctx.throw(400, result.msg)
                     }
                 } else {
                     ctx.throw(400, 'bad userID in request');
+                }
+                break
+            case /\/getMessage/.test(ctx.url):
+                if (!!tokenResult.id) {
+                    select = `select * from message where uid = "${tokenResult.id}" order by state limit ${param.offset}, ${param.limit}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.throw(400, result.msg)
+                    }
+                } else {
+                    ctx.throw(400, 'not found')
+                }
+                break
+            case /\/readMessage/.test(ctx.url):
+                if (param.uid === tokenResult.id) {
+                    select = `update message set state = 1 where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(500, result.msg)
+                    }
+                } else {
+                    ctx.throw(400, 'not found')
                 }
                 break
             case /\/updateUserInfor/.test(ctx.url):
@@ -245,6 +296,9 @@ app.use(async(ctx, next) => {
                             from requestion
                             where requester="${tokenResult.id}" and state<2`
                     result = await querySQL(select)
+                    // if (io.sockets.connected[spEnum[reqToken]]) {
+                    //     io.sockets.connected[spEnum[reqToken]].send('message')
+                    // }
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
@@ -334,13 +388,35 @@ app.use(async(ctx, next) => {
                     }
                     if ((level === 1 && param.state < 2) || (level === 2 && param.state >= 3 && param.state <= 4)) {
                         if (param.operate === 0) {
+                            var time = Date.now()
                             select = `update requestion
-                                    set state=state+1, approver="${param.uid}" where id=${param.id}`
+                                    set state=state+1, approver="${param.uid}", changeTime="${time}" where id=${param.id}`,
                             result = await querySQL(select)
                             if (!!result.state) {
-                                ctx.body = {
-                                    type: 0,
-                                    msg: 'success'
+                                select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
+                                result = await querySQL(select)
+                                if (!!result.state) {
+                                    if (param.state < 4) {
+                                        var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为${param.uid}`
+                                    } else {
+                                        var messageDate = `您的描述为<b>${param.description}</b>的申请已完成`
+                                    }
+                                    let message = {
+                                        id: result.body.insertId,
+                                        uid: param.requester,
+                                        data: messageDate,
+                                        state: 0,
+                                        occurTime: time
+                                    }
+                                    if (io.sockets.connected[spEnum[param.requester]]) {
+                                        io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                    }
+                                    ctx.body = {
+                                        type: 0,
+                                        msg: 'success'
+                                    }
+                                } else {
+                                    ctx.throw(400, result.msg)
                                 }
                             } else {
                                 ctx.throw(400, result.msg)
@@ -429,11 +505,7 @@ app.use(async(ctx, next) => {
                     key = 1
                 }
                 if (!!param.name) {
-                    if (!isNaN(param.name)) {
-                        select += ` (u.id=${param.name} or u.name="${param.name}") and`
-                    } else {
-                        select += ` u.name="${param.name}" and`
-                    }
+                    select += ` (u.id="${param.name}" or u.name="${param.name}") and`
                     key = 1
                 }
                 if (!!param.state) {
@@ -605,8 +677,23 @@ app.use(async(ctx, next) => {
 
 app.use(static(__dirname, 'static'))
 
-let httpServer = app.listen(3000, () => {
+let server = app.listen(3000, () => {
     console.log('server listening 3000...')
+})
+
+let io = ws(server)
+
+io.on('connection', (socket) => {
+    spEnum[socket.handshake.query.token] = socket.id
+    socket.on('error', (error) => {
+        console.log(error)
+    })
+    socket.on('reconnect', (socket) => {
+        console.log('one connect has been reconnected')
+    })
+    socket.on('disconnect', (reason) => {
+        console.log('one connection has been discart')
+    })
 })
 
 // 执行查询函数

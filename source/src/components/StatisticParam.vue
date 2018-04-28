@@ -8,7 +8,7 @@
                 <el-input v-model="params.laboratory" placeholder="请输入研究室名称"></el-input>
             </el-form-item>
             <el-form-item label="项目">
-                <el-select v-model="params.project">
+                <el-select v-model="params.project" clearable>
                     <el-option v-for="pro in projects" :key="pro.id" :label="pro.title" :value="pro.id"></el-option>
                 </el-select>
             </el-form-item>

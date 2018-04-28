@@ -40,10 +40,13 @@
                         <el-input v-else v-model="user.laboratory" placeholder="请输入"></el-input>
                     </el-form-item>
                 </el-form>
-                <el-button v-if="!update" type="primary" @click="update=true">
-                    修改
-                </el-button>
-                <div v-else>
+                <div class="button-wrapper" v-if="!update">
+                    <el-button type="primary" @click="update=true">
+                        修改
+                    </el-button>
+                    <el-button type="danger" @click="logout">注销</el-button>
+                </div>
+                <div class="button-wrapper" v-else>
                     <el-button type="primary" @click="submit">
                         提交修改
                     </el-button>
@@ -54,18 +57,65 @@
             </el-main>
             <el-aside>
                 <p class="title">消息</p>
+                <div class="message-wrapper" ref="message">
+                    <ul class="new">
+                        <li v-for="(msg, index) in newMsgs" :key="msg.id" class="message-content" @click="showMessage(msg, index, 0)">
+                            <span class="title">{{msg.title}}</span>
+                            <span class="content" v-html="msg.data"></span>
+                            <span class="time">{{formatDate(msg.occurTime)}}</span>
+                        </li>
+                    </ul>
+                    <ul class="old">
+                        <li v-for="(msg, index) in msgs" :key="msg.id" class="message-content" @click="showMessage(msg, index, 1)">
+                            <span class="title">{{msg.title}}</span>
+                            <span class="content" v-html="msg.data"></span>
+                            <span class="time">{{formatDate(msg.occurTime)}}</span>
+                        </li>
+                    </ul>
+                    <p v-if="!msgs.length&&!newMsgs.length" class="empty">没有消息~</p>
+                </div>
             </el-aside>
         </el-container>
+        <el-dialog
+            :title="show.title"
+            :visible.sync="dialogVisible"
+            width="30%">
+            <span v-html="show.data"></span>
+            <p style="text-align: right">{{formatDate(show.occurTime)}}</p>
+            <span slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 <script>
+import {formatDate} from '@/utils'
+
 export default {
     data() {
         return {
             imageUrl: '',
             user: {},
-            update: false
+            update: false,
+            newMsgs: [],
+            msgs: [],
+            limit: {
+                limit: 20,
+                offset: 0
+            },
+            show: {
+                title: ''
+            },
+            dialogVisible: false,
+            requestable: true
         }
+    },
+    created() {
+        let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+        if (!token) {
+            this.$router.replace('/login')
+        }
+        this.getMessage()
     },
     mounted() {
         this.user = {...this.$store.state.user}
@@ -74,6 +124,7 @@ export default {
                 this.user = {...this.$store.state.user}
             }, 500)
         }
+        this.setScrollEvent()
     },
     computed: {
         uploadHeaders() {
@@ -83,6 +134,7 @@ export default {
         }
     },
     methods: {
+        formatDate,
         cancelUpdate() {
             this.user = {...this.$store.state.user}
             this.update = false
@@ -98,6 +150,21 @@ export default {
               this.$message.error('上传头像图片大小不能超过 2MB!')
             }
             return isLt2M
+        },
+        setScrollEvent() {
+            let doc = this.$refs.message
+            console.log(doc.offsetTop, doc.offsetHeight)
+            doc.addEventListener('scroll', (e) => {
+                if (doc.scrollTop + doc.offsetHeight === doc.scrollHeight) {
+                    if (this.requestable) {
+                        this.requestable = false
+                        this.getMessage()
+                        setTimeout(() => {
+                            this.requestable = true
+                        }, 1000)
+                    }
+                }
+            })
         },
         submit() {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
@@ -120,6 +187,74 @@ export default {
                         })
                     }
                 })
+        },
+        logout() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/logout')
+                .set('Authorization', 'Bearer ' + token)
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        localStorage.removeItem('token')
+                        this.$store.state.socket.disconnect(true)
+                        this.$store.commit('logout')
+                        this.$router.replace('/login')
+                    }
+                })
+        },
+        getMessage() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getMessage')
+                .set('Authorization', 'Bearer ' + token)
+                .send(this.limit)
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.limit.offset += res.body.length
+                        res.body.map((msg) => {
+                            if (msg.state === 0) {
+                                this.newMsgs.push(msg)
+                            } else {
+                                this.msgs.push(msg)
+                            }
+                        })
+                    }
+                })
+        },
+        showMessage(msg, index, state) {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.show = msg
+            this.dialogVisible = true
+            if (state === 0) {
+                this.$request
+                    .post('/test/readMessage')
+                    .set('Authorization', 'Bearer ' + token)
+                    .send({
+                        uid: msg.uid,
+                        id: msg.id
+                    })
+                    .end((err, res) => {
+                        if (!!err) {
+                            this.$message({
+                                type: 'error',
+                                message: err.response.text
+                            })
+                        } else {
+                            this.newMsgs.splice(index, 1)
+                            this.msgs.unshift(msg)
+                        }
+                    })
+            }
         }
     }
 }
@@ -127,6 +262,7 @@ export default {
 <style lang="stylus">
 .user
     .el-main
+        margin-right: 3rem
         .avatar
             position: relative
             font-size: .14rem
@@ -171,4 +307,44 @@ export default {
             font-size: .18rem
             padding-bottom: .05rem
             border-bottom: 1px solid #F2F6FC
+            margin: .05rem 0 0 0
+        .message-wrapper
+            width: 100%
+            position: absolute
+            top: .4rem
+            bottom: 0
+            overflow-y: auto
+            ul
+                text-align: left
+                padding: 0
+                .message-content
+                    display: flex
+                    padding: 0 .03rem
+                    align-items: center
+                    cursor: pointer
+                    box-sizing: border-box
+                    border-bottom: 1px solid #F2F6FC
+                    &:hover
+                        background: rgba(0, 0, 0, .03)
+                    .title
+                        flex: 0 1 auto
+                        margin: .03rem 0 0 0
+                        font-size: .14rem
+                        padding: 0
+                        border: none
+                    .content
+                        flex: 1 1 auto
+                        font-size: .1rem
+                        margin: 0 .05rem
+                        white-space: nowrap
+                        overflow: hidden
+                        text-overflow: ellipsis
+                    .time
+                        flex: 0 0 auto
+                        font-size: .12rem
+            .new
+                color: #409EFF
+            .empty
+                font-size: .18rem
+                color: #C0C4CC
 </style>

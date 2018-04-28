@@ -1,8 +1,5 @@
 <template>
     <div class="detail">
-        <!-- <el-steps v-if="requestion.state!=0" class="state-wrapper" :active="requestion.state" align-center>
-            <el-step v-for="step in steps" :key="step.title" :title="step.title" :description="step.desc"></el-step>
-        </el-steps> -->
         <requestion :requestion="requestion" :inline="true" :isRemark="isRemark" @operateRequestion="dealOperate" @remarkRequestion="remark"></requestion>
     </div>
 </template>
@@ -89,6 +86,8 @@ export default {
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
+                    requester: this.requestion.requester,
+                    description: this.requestion.description,
                     state: this.requestion.state,
                     operate: ope,
                     reason: reason
