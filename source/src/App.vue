@@ -15,7 +15,7 @@
                 <el-menu-item index="/project">项目管理</el-menu-item>
                 <el-menu-item index="/statistics">数据统计</el-menu-item>
                 <el-menu-item class="user-info" index="/userInfor">
-                    <el-badge is-dot>
+                    <el-badge>
                         <img class="logo" :src="$store.state.user&&$store.state.user.avatar||'http://localhost:3000/static/avatar/timg.jpeg'">
                     </el-badge>
                     <span>{{$store.state.user&&$store.state.user.name}}</span>

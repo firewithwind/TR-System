@@ -15,6 +15,7 @@ import Detail from '@/components/Detail'
 import Statistics from '@/components/Statistics'
 import Login from '@/components/Login'
 import User from '@/components/User'
+import Project from '@/components/Project'
 
 Vue.use(Router)
 
@@ -34,6 +35,11 @@ export default new Router({
             path: '/userInfor',
             name: 'userInfor',
             component: User
+        },
+        {
+            path: '/project',
+            name: 'project',
+            component: Project
         },
         {
             path: '/reimbursement/:id',

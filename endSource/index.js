@@ -13,7 +13,7 @@ const { uploadFile } = require('./uploadFile.js')
 const fs = require('fs')
 const qs = require('querystring')
 const { createPersonReim } = require('./utils/index.js')
-const secret = `${Date.now()}`
+const secret = `hitwh`
 let spEnum = {}
 
 const app = new koa();
@@ -156,7 +156,7 @@ app.use(async(ctx, next) => {
                 break
             case /\/getMessage/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select * from message where uid = "${tokenResult.id}" order by state limit ${param.offset}, ${param.limit}`
+                    select = `select * from message where uid = "${tokenResult.id}" order by occurTime desc limit ${param.offset}, ${param.limit}`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -231,9 +231,8 @@ app.use(async(ctx, next) => {
                 break
             case /\/getProjects/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select p.*
-                            from project p join user_pro u on p.id = u.pid
-                            where u.uid = "${tokenResult.id}"`
+                    select = `select *
+                            from project`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -242,6 +241,38 @@ app.use(async(ctx, next) => {
                     }
                 } else {
                     ctx.throw(400, 'bad user ID in param')
+                }
+                break
+            case /\/getFindProjects/.test(ctx.url):
+                var step = 0
+                select = `select * from project
+                        where`
+                if (!!param.query.id) {
+                    select += ` id = "${param.query.id}" and `
+                }
+                if (!!param.query.occurTime) {
+                    select += ` occurTime > "${param.query.occurTime}" and `
+                }
+                if (!!param.query.title) {
+                    select += ` title = "${param.query.title}" `
+                    step = 1
+                }
+                if (step === 0) {
+                    select = select.slice(0, -5)
+                }
+                var total = await querySQL(select.replace('*', 'count(*)'))
+                if (!total.state) {
+                    ctx.throw(400, total.msg)
+                }
+                select += `limit ${param.limit.offset}, ${param.limit.limit}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        total: total.body[0]['count(*)'],
+                        result: result.body
+                    }
+                } else {
+                    ctx.throw(400, result.msg)
                 }
                 break
             case /\/createRequestion/.test(ctx.url):
@@ -277,8 +308,8 @@ app.use(async(ctx, next) => {
                 break
             case /\/getRequestionDetail/.test(ctx.url):
                 if (!!param.id) {
-                    select = `select *
-                            from user u join requestion r on r.requester = u.id
+                    select = `select u.name, u.level, r.*, p.title, p.funding, p.overhead, p.alloverhead, p.overflow
+                            from user u join requestion r on r.requester = u.id right join project p on r.project = p.id
                             where r.id=${param.id}`
                     result = await querySQL(select)
                     if (!!result.state) {
@@ -386,7 +417,7 @@ app.use(async(ctx, next) => {
                     } else {
                         ext.throw(400, 'no this user')
                     }
-                    if ((level === 1 && param.state < 2) || (level === 2 && param.state >= 3 && param.state <= 4)) {
+                    if (level === 1 && param.state < 2) {
                         if (param.operate === 0) {
                             var time = Date.now()
                             select = `update requestion
@@ -396,12 +427,74 @@ app.use(async(ctx, next) => {
                                 select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
                                 result = await querySQL(select)
                                 if (!!result.state) {
-                                    if (param.state < 4) {
-                                        var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为${param.uid}`
-                                    } else {
-                                        var messageDate = `您的描述为<b>${param.description}</b>的申请已完成`
+                                    var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为${param.uid}`
+                                    var message = {
+                                        id: result.body.insertId,
+                                        uid: param.requester,
+                                        data: messageDate,
+                                        state: 0,
+                                        occurTime: time
                                     }
-                                    let message = {
+                                    if (io.sockets.connected[spEnum[param.requester]]) {
+                                        io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                    }
+                                    ctx.body = {
+                                        type: 0,
+                                        msg: 'success'
+                                    }
+                                } else {
+                                    ctx.throw(400, result.msg)
+                                }
+                            } else {
+                                ctx.throw(400, result.msg)
+                            }
+                        }
+                    } else if (level === 2 && param.state >= 3 && param.state < 4) {
+                        if (param.operate === 0) {
+                            var time = Date.now()
+                            select = [`update requestion
+                                    set state=state+1, approver="${param.uid}", changeTime="${time}" where id=${param.id}`,
+                                    `update project set overhead = overhead + ${param.acountMoney}
+                                    where id in (select project from requestion where id = ${param.id})`],
+                            result = await querySQL(select)
+                            if (!!result.state) {
+                                select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
+                                result = await querySQL(select)
+                                if (!!result.state) {
+                                    var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为${param.uid}`
+                                    var message = {
+                                        id: result.body.insertId,
+                                        uid: param.requester,
+                                        data: messageDate,
+                                        state: 0,
+                                        occurTime: time
+                                    }
+                                    if (io.sockets.connected[spEnum[param.requester]]) {
+                                        io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                    }
+                                    ctx.body = {
+                                        type: 0,
+                                        msg: 'success'
+                                    }
+                                } else {
+                                    ctx.throw(400, result.msg)
+                                }
+                            } else {
+                                ctx.throw(400, result.msg)
+                            }
+                        }
+                    } else if (level === 2 && param.state === 4) {
+                        if (param.operate === 0) {
+                            var time = Date.now()
+                            select = `update requestion
+                                    set state=state+1, approver="${param.uid}", changeTime="${time}" where id=${param.id}`
+                            result = await querySQL(select)
+                            if (!!result.state) {
+                                select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
+                                result = await querySQL(select)
+                                if (!!result.state) {
+                                    var messageDate = `您的描述为<b>${param.description}</b>的申请已完成`
+                                    var message = {
                                         id: result.body.insertId,
                                         uid: param.requester,
                                         data: messageDate,
@@ -443,7 +536,7 @@ app.use(async(ctx, next) => {
                             ${param.requestion},
                             ${param.type},
                             "${Date.now()}",
-                            "${param.money}",
+                            ${param.money},
                             "${param.startAddress}",
                             "${param.startDate}",
                             "${param.startTime}",
@@ -453,7 +546,10 @@ app.use(async(ctx, next) => {
                             ${seat},
                             "${param.desc}",
                             NULL, NULL, "${param.note}"
-                            )`, `update requestion set state=3 where id=${param.requestion}`]
+                            )`,
+                            `update requestion set state=3 where id=${param.requestion}`,
+                            `update project set alloverhead = alloverhead + ${param.money}
+                            where id in (select project from requestion where id = ${param.requestion})`]
                     result =await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -482,8 +578,8 @@ app.use(async(ctx, next) => {
                 break
             case /\/getCreatableReim/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select *
-                            from user u join requestion r on u.id=r.requester
+                    select = `select u.name, u.level, r.*, p.title, p.funding, p.overhead, p.alloverhead, p.overflow
+                            from user u join requestion r on r.requester = u.id right join project p on r.project = p.id
                             where r.requester="${tokenResult.id}" and state>=2 and state <3`
                     result = await querySQL(select)
                     if (!!result.state) {

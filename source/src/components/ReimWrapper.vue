@@ -171,7 +171,7 @@
         <el-dialog :visible.sync="dialogPicture">
             <img width="100%" :src="dialogImageUrl" alt="">
         </el-dialog>
-        <div id="printReimInfo" style="width:100%;font-size:14px;text-align:center;">
+<!--         <div id="printReimInfo" style="width:100%;font-size:14px;text-align:center;">
             <span style="font-weight: bold">网络与信息安全技术研究中心（NIST）差旅费用报销单 单号</span>
             <table border="1" style="width:80%;margin:15px auto 0;">
                 <tr>
@@ -188,7 +188,7 @@
                 </tr>
             </table>
             <p style="width:80%;margin:0 auto;text-align:left;font-weight:bold">项目卡号　（不填）</p>
-            <!-- <table border="1" style="width:80%;margin:0 auto">
+ -->            <!-- <table border="1" style="width:80%;margin:0 auto">
                 <tr>
                     <th>序号</th>
                     <th>费用类型</th>
@@ -206,7 +206,7 @@
                     <td>{{reim.note}}</td>
                 </tr>
             </table> -->
-        </div>
+        <!-- </div> -->
     </div>
 </template>
 <script>

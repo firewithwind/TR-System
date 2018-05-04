@@ -9,10 +9,10 @@
                 {{requestion.name}}
             </el-form-item>
             <el-form-item label="实验室:">
-                {{requestion.laboratory}}
+                {{$store.state.user.laboratory}}
             </el-form-item>
             <el-form-item label="所属项目:">
-                <span>{{requestion.project}}</span>
+                <span>{{requestion.title}}</span>
             </el-form-item>
             <el-form-item label="申请时间:">
                 <span>{{formatDate(requestion.occurTime)}}</span>

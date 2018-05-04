@@ -52,7 +52,7 @@
             </el-main>
         </el-container>
         <div class="footer">
-            <span>哈尔滨工业大学(威海)</span><span style="margin-left: .2rem">虚拟化技术研究室</span>
+            <span>哈尔滨工业大学(威海)</span><span style="margin-left: .2rem">{{$store.state.user.laboratory}}</span>
         </div>
     </div>
 </template>

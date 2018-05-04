@@ -7,14 +7,17 @@
             <el-form-item label="申请人:">
                 {{requestion.name}}
             </el-form-item>
-            <el-form-item label="实验室:">
-                {{requestion.laboratory}}
+            <el-form-item label="研究室:">
+                {{$store.state.user.laboratory}}
             </el-form-item>
             <el-form-item label="所属项目:">
-                <span>{{requestion.project}}</span>
+                <span>{{requestion.title}}</span>
             </el-form-item>
             <el-form-item label="申请时间:">
                 <span>{{formatDate(requestion.occurTime)}}</span>
+            </el-form-item>
+            <el-form-item label="申请描述:">
+                <span>{{requestion.description}}</span>
             </el-form-item>
         </el-form>
         <reim-wrapper :requestion="requestion" :reims="reims" :pics="pics" @addNewReim="addNewReim" @deleteReim="deleteReim" @removeInvoice="removeInvoice" :isRemark="isRemark"></reim-wrapper>
@@ -26,6 +29,26 @@
                 <el-radio v-model="remarkResult" :label="0">通过</el-radio>
                 <el-radio v-model="remarkResult" :label="1">驳回</el-radio>
             </template>
+            <div v-if="!remarkResult">
+                <span>选择报销项目：</span>
+                <el-select v-model="selectPro">
+                    <el-option v-for="pro in projects"
+                            :value="pro.id"
+                            :label="pro.title"
+                            :key="pro.id">
+                    </el-option>
+                </el-select>
+            </div>
+            <div v-if="!remarkResult" style="margin-top: .1rem">
+                <span>选择室内交通报销项目：</span>
+                <el-select v-model="selectPro2">
+                    <el-option v-for="pro in projects"
+                            :value="pro.id"
+                            :label="pro.title"
+                            :key="pro.id">
+                    </el-option>
+                </el-select>
+            </div>
             <el-input
                 v-if="!!remarkResult"
                 type="textarea"
@@ -63,7 +86,10 @@ export default {
             dialogVisible: false,
             remarkResult: 0,
             remarkReason: '',
-            pics: []
+            pics: [],
+            selectPro: '',
+            selectPro2: '',
+            projects: []
         }
     },
     created() {
@@ -73,9 +99,37 @@ export default {
             this.isRemark = true
         }
         this.getRequestionDetail(param.id, this.getInvoices)
+        this.getProjects()
     },
     methods: {
         formatDate,
+        getProjects() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getProjects')
+                .set('Authorization', `Bearer ${token}`)
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.projects = res.body
+                    }
+                })
+        },
+        acountMoney() {
+            if (this.reims.length === 0) {
+                return 0
+            } else if (this.reims.length === 1) {
+                return this.reims[0].money
+            }
+            return this.reims.reduce((base, reim) => {
+                base = base.money || base
+                return base + reim.money
+            })
+        },
         endInvoice() {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
@@ -136,7 +190,10 @@ export default {
                     description: this.requestion.description,
                     state: this.requestion.state,
                     operate: this.remarkResult,
-                    reason: this.reason
+                    reason: this.reason,
+                    acountMoney: this.acountMoney(),
+                    project: this.selectPro,
+                    project2: this.selectPro2
                 })
                 .end((err, res) => {
                     if (!!err) {
@@ -164,6 +221,7 @@ export default {
                         console.log(err)
                     } else {
                         this.requestion = res.body
+                        this.selectPro = res.body.project
                         if (!!callback) {
                             callback()
                         }

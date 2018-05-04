@@ -8,7 +8,7 @@
                 {{requestion.name}}
             </el-form-item>
             <el-form-item label="研究室:">
-                {{requestion.laboratory}}
+                {{$store.state.user.laboratory}}
             </el-form-item>
             <el-form-item label="所属项目:">
                 <el-select v-if="requestion.state===0" v-model="requestion.project" clearable>
@@ -19,10 +19,13 @@
                       :value="item.id">
                     </el-option>
                 </el-select>
-                <span v-else>{{requestion.project}}</span>
+                <span v-else>{{requestion.title}}</span>
             </el-form-item>
             <el-form-item v-if="requestion.state!=0" label="申请时间:">
                 {{formatDate(requestion.occurTime)}}
+            </el-form-item>
+            <el-form-item label="申请描述:">
+                {{requestion.description}}
             </el-form-item>
         </el-form>
         <p class="split">出差任务申请
