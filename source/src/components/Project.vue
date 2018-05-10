@@ -46,10 +46,10 @@
                                     <el-input v-else v-model="currentProject.overflow"></el-input>
                                 </el-form-item>
                                 <el-form-item label="创建时间">
-                                    <span>{{ props.row.occurTime }}</span>
+                                    <span>{{ formatDate(props.row.occurTime) }}</span>
                                 </el-form-item>
                                 <el-form-item>
-                                    <el-button v-if="!update" type="text" @click="updateProject(props.row)">修改</el-button>
+                                    <el-button v-if="!update&&hasACC" type="text" @click="updateProject(props.row)">修改</el-button>
                                     <el-button v-if="update" type="text" @click="updateProject(props.row)">提交</el-button>
                                     <el-button v-if="update" type="text" @click="update=false">取消</el-button>
                                 </el-form-item>
@@ -58,7 +58,6 @@
                     </el-table-column>
                     <el-table-column prop="id" label="项目编号"></el-table-column>
                     <el-table-column prop="title" label="项目名称"></el-table-column>
-                    <el-table-column prop="description" label="项目描述"></el-table-column>
                     <el-table-column prop="funding" label="资金"></el-table-column>
                     <el-table-column prop="overhead" label="实际开支"></el-table-column>
                     <el-table-column label="预计开支">
@@ -104,6 +103,11 @@ export default {
                 overflow: ''
             },
             update: false
+        }
+    },
+    computed: {
+        hasACC() {
+            return this.$store.state.user.level === 2
         }
     },
     methods: {

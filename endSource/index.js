@@ -12,7 +12,7 @@ const static = require('koa-static')
 const { uploadFile } = require('./uploadFile.js')
 const fs = require('fs')
 const qs = require('querystring')
-const { createPersonReim } = require('./utils/index.js')
+const { createPersonReim, createFinanceReim } = require('./utils/index.js')
 const secret = `hitwh`
 let spEnum = {}
 
@@ -71,14 +71,12 @@ app.use(async(ctx, next) => {
             tokenResult = await verify(reqToken, secret)
         }
         switch (true) {
-            case /\/changePersonLevel/.test(ctx.url):
-                let queryParam = qs.parse(ctx.url.split('?')[1])
-                select = `update user set level = ${queryParam.id} where id="liulianxing"`
-                result = await querySQL(select)
-                ctx.body = 'success'
-                break
             case /^[\/]?$/.test(ctx.url):
                 ctx.url = `/static/dist/index.html`
+                await next()
+                break
+            case /^\/mamager/.test(ctx.url):
+                ctx.url = '/static/manager/index.html'
                 await next()
                 break
             case /\/login/.test(ctx.url):
@@ -112,7 +110,7 @@ app.use(async(ctx, next) => {
                     }
                     ctx.body = 'success'
                 } else {
-                    ctx.throw(400, 'not found')
+                    ctx.throw(400, 'Not Found')
                 }
                 break
             case /\/register/.test(ctx.url):
@@ -164,7 +162,84 @@ app.use(async(ctx, next) => {
                         ctx.throw(400, result.msg)
                     }
                 } else {
-                    ctx.throw(400, 'not found')
+                    ctx.throw(400, 'Not Found')
+                }
+                break
+            case /\/getAnnouncement/.test(ctx.url):
+                select = `select count(*) from announcement`
+                var total = await querySQL(select)
+                if (!total.state) {
+                    ctx.throw(400, 'Not Found')
+                }
+                select = `select * from announcement order by occurTime desc limit ${param.offset}, ${param.limit}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        data: result.body,
+                        total: total.body[0]['count(*)']
+                    }
+                } else {
+                    ctx.throw(400, 'Not Found')
+                }
+                break
+            case /\/getQuestionDetail/.test(ctx.url):
+                if (!!param.id) {
+                    select = `select * from question where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body[0]
+                    } else {
+                        ctx.throw(400, 'Not Found')
+                    }
+                } else {
+                    ctx.throw(400, '参数错误')
+                }
+                break
+            case /\/getQuestion$/.test(ctx.url):
+                select = `select count(*) from question`
+                var total = await querySQL(select)
+                if (!total.state) {
+                    ctx.throw(400, 'Not Found')
+                }
+                select = `select id, title, occurTime from question order by occurTime desc limit ${param.offset}, ${param.limit}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        data: result.body,
+                        total: total.body[0]['count(*)']
+                    }
+                } else {
+                    ctx.throw(400, 'Not Found')
+                }
+                break
+            case /\/getPolicyDetail/.test(ctx.url):
+                if (!!param.id) {
+                    select = `select * from policy where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body[0]
+                    } else {
+                        ctx.throw(400, 'Not Found')
+                    }
+                } else {
+                    ctx.throw(400, '参数错误')
+                }
+                break
+            case /\/getPolicy$/.test(ctx.url):
+                select = `select count(*) from policy`
+                var total = await querySQL(select)
+                if (!total.state) {
+                    ctx.throw(400, 'Not Found')
+                }
+                select = `select id, title, occurTime from policy order by occurTime desc limit ${param.offset}, ${param.limit}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = {
+                        data: result.body,
+                        total: total.body[0]['count(*)']
+                    }
+                } else {
+                    ctx.throw(400, 'Not Found')
                 }
                 break
             case /\/readMessage/.test(ctx.url):
@@ -177,7 +252,7 @@ app.use(async(ctx, next) => {
                         ctx.throw(500, result.msg)
                     }
                 } else {
-                    ctx.throw(400, 'not found')
+                    ctx.throw(400, 'Not Found')
                 }
                 break
             case /\/updateUserInfor/.test(ctx.url):
@@ -323,9 +398,9 @@ app.use(async(ctx, next) => {
                 break
             case /\/getUndoneRequestion/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select *
-                            from requestion
-                            where requester="${tokenResult.id}" and state<2`
+                    select = `select r.*, p.title
+                            from requestion r join project p on r.project = p.id
+                            where r.requester="${tokenResult.id}" and r.state<2`
                     result = await querySQL(select)
                     // if (io.sockets.connected[spEnum[reqToken]]) {
                     //     io.sockets.connected[spEnum[reqToken]].send('message')
@@ -341,9 +416,9 @@ app.use(async(ctx, next) => {
                 break
             case /\/getUndoneReimbursement/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select *
-                            from requestion
-                            where requester="${tokenResult.id}" and state>=3 and state<5`
+                    select = `select r.*, p.title
+                            from requestion r join project p on r.project = p.id
+                            where r.requester="${tokenResult.id}" and r.state>=3 and r.state<5`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -358,8 +433,9 @@ app.use(async(ctx, next) => {
                 if (!!tokenResult.id) {
                     var level = tokenResult.level
                     if (level == 1) {
-                        select = `select *
-                                from user u join requestion r on r.requester=u.id
+                        select = `select r.*, u.name, u.level, p.title
+                                from user u right join requestion r on r.requester=u.id
+                                right join project p on r.project = p.id
                                 where state < 2`
                         result = await querySQL(select)
                         if (!!result.state) {
@@ -368,8 +444,9 @@ app.use(async(ctx, next) => {
                             ctx.body = result.msg
                         }
                     } else if (level == 2) {
-                        select = `select *
-                                from user u join requestion r on r.requester=u.id
+                        select = `select r.*, u.name, u.level, p.title
+                                from user u right join requestion r on r.requester=u.id
+                                right join project p on r.project = p.id
                                 where state > 2 and state < 5`
                         result = await querySQL(select)
                         if (!!result.state) {
@@ -409,7 +486,7 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/approveRequestion/.test(ctx.url):
-                if (!param.id || !param.ope) {
+                if (!!param.id) {
                     select = `select level from user where id="${param.uid}"`
                     var queryRes = await querySQL(select)
                     if (!!queryRes.state) {
@@ -418,10 +495,78 @@ app.use(async(ctx, next) => {
                         ext.throw(400, 'no this user')
                     }
                     if (level === 1 && param.state < 2) {
+                        var time = Date.now()
                         if (param.operate === 0) {
-                            var time = Date.now()
                             select = `update requestion
                                     set state=state+1, approver="${param.uid}", changeTime="${time}" where id=${param.id}`,
+                            result = await querySQL(select)
+                            if (!!result.state) {
+                                select = `insert into message values(NULL, "${param.requester}", "您的描述为<b>${param.description}</b>的申请已被审批，审批人id为<b>${param.uid}</b>", 0, "${time}", "审核通知")`
+                                result = await querySQL(select)
+                                if (!!result.state) {
+                                    var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为<b>${param.uid}</b>`
+                                    var message = {
+                                        id: result.body.insertId,
+                                        uid: param.requester,
+                                        data: messageDate,
+                                        state: 0,
+                                        occurTime: time
+                                    }
+                                    if (io.sockets.connected[spEnum[param.requester]]) {
+                                        io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                    }
+                                    ctx.body = {
+                                        type: 0,
+                                        msg: 'success'
+                                    }
+                                } else {
+                                    ctx.throw(400, result.msg)
+                                }
+                            } else {
+                                ctx.throw(400, result.msg)
+                            }
+                        } else {
+                            select = `insert into message values(NULL, "${param.requester}", "您的描述为<b>${param.description}</b>的申请被驳回，原因为<b>${param.reason}</b>,<br/>审批人id: <b>${param.uid}</b>,请撤销后重新提交申请", 0, ${time}, "审核通知")`
+                            result = await querySQL(select)
+                            if (!!result.state) {
+                                var messageDate = `您的描述为<b>${param.description}</b>的申请被驳回，原因为<b>${param.reason}</b>,<br/>审批人id: <b>${param.uid}</b>,请撤销后重新提交申请`
+                                var message = {
+                                    id: result.body.insertId,
+                                    uid: param.requester,
+                                    data: messageDate,
+                                    state: 0,
+                                    occurTime: time
+                                }
+                                if (io.sockets.connected[spEnum[param.requester]]) {
+                                    io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                }
+                                ctx.body = {
+                                    type: 0,
+                                    msg: 'success'
+                                }
+                            } else {
+                                ctx.throw(400, result.msg)
+                            }
+                        }
+                    } else if (level === 2 && param.state >= 3 && param.state < 4) {
+                        var time = Date.now()
+                        if (param.operate === 0) {
+                            select = [`update requestion
+                                    set state=state+1, reimer="${param.uid}", changeTime="${time}", project=${param.project} where id=${param.id}`,
+                                    `update project set overhead = overhead + ${param.acountMoney[0]}
+                                    where id = ${param.project}`,
+                                    `update project set overhead = overhead + ${param.acountMoney[1]}
+                                    where id = ${param.project2}`]
+                            if (param.oldProject !== param.project) {
+                                select.push(
+                                            `update reimbursement set project = ${param.project} where requestion = ${param.id} and type != 34`,
+                                            `update project set alloverhead = alloverhead - ${param.acountMoney[0]} where id = ${param.oldProject}`)
+                            }
+                            if (param.oldProject !== param.project2) {
+                                select.push(
+                                            `update reimbursement set project = ${param.project2} where requestion = ${param.id} and type = 34`,
+                                            `update project set alloverhead = alloverhead - ${param.acountMoney[1]} where id = ${param.oldProject}`)
+                            }
                             result = await querySQL(select)
                             if (!!result.state) {
                                 select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
@@ -448,36 +593,24 @@ app.use(async(ctx, next) => {
                             } else {
                                 ctx.throw(400, result.msg)
                             }
-                        }
-                    } else if (level === 2 && param.state >= 3 && param.state < 4) {
-                        if (param.operate === 0) {
-                            var time = Date.now()
-                            select = [`update requestion
-                                    set state=state+1, approver="${param.uid}", changeTime="${time}" where id=${param.id}`,
-                                    `update project set overhead = overhead + ${param.acountMoney}
-                                    where id in (select project from requestion where id = ${param.id})`],
+                        } else {
+                            select = `insert into message values(NULL, "${param.requester}", "您的描述为<b>${param.description}</b>的申请报销被驳回，原因为<b>${param.reason}</b>,请修改<br/>审批人id: <b>${param.uid}</b>", 0, ${time}, "审核通知")`
                             result = await querySQL(select)
                             if (!!result.state) {
-                                select = `insert into message values(NULL, "${param.requester}", "您的描述为${param.description}的申请已被审批，审批人id为${param.uid}", 0, "${time}", "审核通知")`
-                                result = await querySQL(select)
-                                if (!!result.state) {
-                                    var messageDate = `您的描述为<b>${param.description}</b>的申请已被审批，审批人id为${param.uid}`
-                                    var message = {
-                                        id: result.body.insertId,
-                                        uid: param.requester,
-                                        data: messageDate,
-                                        state: 0,
-                                        occurTime: time
-                                    }
-                                    if (io.sockets.connected[spEnum[param.requester]]) {
-                                        io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
-                                    }
-                                    ctx.body = {
-                                        type: 0,
-                                        msg: 'success'
-                                    }
-                                } else {
-                                    ctx.throw(400, result.msg)
+                                var messageDate = `您的描述为<b>${param.description}</b>的申请报销被驳回，原因为<b>${param.reason}</b>,请修改<br/>审批人id: <b>${param.uid}</b>`
+                                var message = {
+                                    id: result.body.insertId,
+                                    uid: param.requester,
+                                    data: messageDate,
+                                    state: 0,
+                                    occurTime: time
+                                }
+                                if (io.sockets.connected[spEnum[param.requester]]) {
+                                    io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                                }
+                                ctx.body = {
+                                    type: 0,
+                                    msg: 'success'
                                 }
                             } else {
                                 ctx.throw(400, result.msg)
@@ -545,7 +678,7 @@ app.use(async(ctx, next) => {
                             "${param.endTime}",
                             ${seat},
                             "${param.desc}",
-                            NULL, NULL, "${param.note}"
+                            NULL, NULL, "${param.note}",${param.project}
                             )`,
                             `update requestion set state=3 where id=${param.requestion}`,
                             `update project set alloverhead = alloverhead + ${param.money}
@@ -565,7 +698,7 @@ app.use(async(ctx, next) => {
                 break
             case /\/getReimbursements/.test(ctx.url):
                 if (!!param.id) {
-                    select = `select * from reimbursement where requestion=${param.id}`
+                    select = `select r.*, p.id, p.title from reimbursement r join project p on r.project = p.id where requestion=${param.id}`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -595,7 +728,9 @@ app.use(async(ctx, next) => {
                 let limit = param.limit
                 let user = param.user
                 let key = 0
-                select = 'select * from user u join requestion r on r.requester=u.id where '
+                select = `select r.*, u.name, u.level, p.title
+                from user u right join requestion r on r.requester=u.id
+                right join project p on r.project = p.id where `
                 if (!!param.id) {
                     select += `r.id=${param.id} and`
                     key = 1
@@ -621,8 +756,8 @@ app.use(async(ctx, next) => {
                 } else {
                     select = select.slice(0, -4)
                 }
-                let sitem = await querySQL(select.replace('*', 'count(*)'))
-                select += ` limit ${limit.offset}, ${limit.count}`
+                let sitem = await querySQL(select.replace('r.*, u.name, u.level, p.title', 'count(*)'))
+                select += ` order by r.occurTime desc limit ${limit.offset}, ${limit.count}`
                 result = await querySQL(select)
                 if (!!sitem.state && !!result.state) {
                     ctx.body = {
@@ -719,7 +854,7 @@ app.use(async(ctx, next) => {
             case /\/getStatisticDate/.test(ctx.url):
                 select = `select reim.*, req.id as rid, req.state, pro.id as pid, pro.title, u.name
                             from requestion req right join reimbursement reim on req.id = reim.requestion
-                            right join project pro on pro.id = req.project
+                            right join project pro on pro.id = reim.project
                             right join user u on req.requester = u.id
                             where`
                 if (!!param.id) {
@@ -746,7 +881,7 @@ app.use(async(ctx, next) => {
             case /\/exportReim/.test(ctx.url):
                 if (param.id) {
                     select = [
-                        `select r.*, u.name from requestion r join user u on u.id = r.requester where r.id = ${param.id}`,
+                        `select r.*, u.name, u.laboratory from requestion r join user u on u.id = r.requester where r.id = ${param.id}`,
                         `select * from reimbursement where requestion = ${param.id}`
                     ]
                     result = await querySQL(select)
@@ -762,7 +897,33 @@ app.use(async(ctx, next) => {
                         ctx.throw(400, result[0].msg || result[1].msg)
                     }
                 } else {
-                    ctx.throw(400, 'bad requestion id in param')
+                    ctx.throw(400, '参数错误')
+                }
+                break
+            case /\/exportFinanceReim/.test(ctx.url):
+                if (!!param.id) {
+                    select = [
+                        `select r.*, u.name, u.laboratory, u2.name as approverName, u3.name as reimerName from
+                        requestion r right join user u on u.id = r.requester
+                        right join user u2 on r.approver = u2.id
+                        right join user u3 on r.reimer = u3.id
+                        where r.id = ${param.id}`,
+                        `select * from reimbursement where requestion = ${param.id}`
+                    ]
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        try {
+                            let filePath = createFinanceReim(result.body[1].body, undefined, result.body[0].body[0])
+                            ctx.body = `http://${ctx.host}${filePath}`
+                        } catch(e) {
+                            ctx.throw(500, 'can not export the .xlsx file')
+                        }
+
+                    } else {
+                        ctx.throw(400, result.msg)
+                    }
+                } else {
+                    ctx.throw(400, '参数错误')
                 }
                 break
             default:
@@ -812,7 +973,7 @@ function querySQL(select) {
         })
     } else {
         return new Promise((resolve, rej) => {
-            let results = []
+            let results = new Array(select.length).fill(0)
             connection.beginTransaction(function(err) {
                 if (err) {
                     rej({
@@ -820,11 +981,11 @@ function querySQL(select) {
                         msg: err
                     })
                 }
-                select.map((item) => {
+                select.forEach((item, index) => {
                     querySQL(item)
                         .then((res) => {
-                            results.push(res)
-                            if (results.length === select.length) {
+                            results[index] = res
+                            if (results.indexOf(0)===-1) {
                                 connection.commit(function(err) {
                                     if (err) {
                                         connection.rollback(function() {

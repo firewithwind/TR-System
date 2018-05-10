@@ -5,6 +5,7 @@
                 <svg v-if="requestion.state>=4" class="icon" aria-hidden="true" @click="exportReim">
                     <use xlink:href="#icon-print"></use>
                 </svg>
+                <span v-if="requestion.state >= 4" class="exportFinanceReim" @click="exportFinanceReim">下载财务审批报销单</span>
                 <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark&&isSelf" class="addReim" @click="showDialog1Visible">添加条目</span></p>
             <el-table
                 class="reimbursement-wrapper"
@@ -69,6 +70,11 @@
                 <el-table-column
                     prop="note"
                     label="备注">
+                </el-table-column>
+                <el-table-column
+                    v-if="requestion.state>=4"
+                    prop="title"
+                    label="报销来源（项目）">
                 </el-table-column>
                 <el-table-column
                     v-if="requestion.state>=2&&requestion.state<4&&!isRemark"
@@ -345,6 +351,22 @@ export default {
             // newWindow.print()
             // newWindow.close()
         },
+        exportFinanceReim() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/exportFinanceReim')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    id: this.requestion.id
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        console.log(err)
+                    } else {
+                        window.open(res.text)
+                    }
+                })
+        },
         addNewReim() {
             this.$emit('addNewReim', this.newReim)
             this.dialog1Visible = false
@@ -429,6 +451,10 @@ export default {
             vertical-align: middle
             margin-left: .05rem
         .addReim
+            float: right
+            margin-right: .1rem
+            cursor: pointer
+        .exportFinanceReim
             float: right
             margin-right: .1rem
             cursor: pointer

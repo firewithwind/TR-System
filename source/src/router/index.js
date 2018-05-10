@@ -16,6 +16,11 @@ import Statistics from '@/components/Statistics'
 import Login from '@/components/Login'
 import User from '@/components/User'
 import Project from '@/components/Project'
+import Policy from '@/components/Policy'
+import PolicyDetail from '@/components/PolicyDetail'
+import Question from '@/components/Question'
+import QuestionDetail from '@/components/QuestionDetail'
+import Announcement from '@/components/Announcement'
 
 Vue.use(Router)
 
@@ -90,6 +95,26 @@ export default new Router({
         {
             path: '/statistics',
             component: Statistics
+        },
+        {
+            path: '/policy',
+            component: Policy
+        },
+        {
+            path: '/policy/detail',
+            component: PolicyDetail
+        },
+        {
+            path: '/question',
+            component: Question
+        },
+        {
+            path: '/question/detail',
+            component: QuestionDetail
+        },
+        {
+            path: '/announcement',
+            component: Announcement
         }
     ]
 })

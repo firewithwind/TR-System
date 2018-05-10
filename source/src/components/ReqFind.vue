@@ -46,7 +46,7 @@
                 label="申请人">
             </el-table-column>
             <el-table-column
-                prop="project"
+                prop="title"
                 label="所属项目">
             </el-table-column>
             <el-table-column

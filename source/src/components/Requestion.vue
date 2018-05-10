@@ -24,9 +24,6 @@
             <el-form-item v-if="requestion.state!=0" label="申请时间:">
                 {{formatDate(requestion.occurTime)}}
             </el-form-item>
-            <el-form-item label="申请描述:">
-                {{requestion.description}}
-            </el-form-item>
         </el-form>
         <p class="split">出差任务申请
             <svg v-if="requestion.state>=2" class="icon" aria-hidden="true" @click="exportTrip">
@@ -66,7 +63,7 @@
                 <span v-else>{{requestion.description}}</span>
             </el-form-item>
             <el-form-item v-if="requestion.state>=2" label="审批人:">
-                <span v-for="item in requestion.approver" :key="item">{{item}}</span>
+                <span v-for="(item, index) in requestion.approver" :key="index">{{item}}</span>
             </el-form-item>
         </el-form>
         <el-dialog

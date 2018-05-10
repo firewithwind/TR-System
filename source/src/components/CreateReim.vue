@@ -76,6 +76,7 @@ export default {
                         .send({
                             requestion: this.requestion.id,
                             uid: this.$store.state.user.id,
+                            project: this.requestion.project,
                             ...rem
                         })
                         .end((err, res) => {

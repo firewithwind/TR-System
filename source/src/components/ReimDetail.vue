@@ -120,12 +120,30 @@ export default {
                 })
         },
         acountMoney() {
-            if (this.reims.length === 0) {
+            let result = []
+            let proReim = this.reims.filter((reim) => {
+                if (reim.type === 34) {
+                    return false
+                }
+                return true
+            })
+            let pro2Reim = this.reims.filter((reim) => {
+                if (reim.type === 34) {
+                    return true
+                }
+                return false
+            })
+            result[0] = this.calculateAcount(proReim)
+            result[1] = this.calculateAcount(pro2Reim)
+            return result
+        },
+        calculateAcount(reims) {
+            if (reims.length === 0) {
                 return 0
-            } else if (this.reims.length === 1) {
-                return this.reims[0].money
+            } else if (reims.length === 1) {
+                return reims[0].money
             }
-            return this.reims.reduce((base, reim) => {
+            return reims.reduce((base, reim) => {
                 base = base.money || base
                 return base + reim.money
             })
@@ -179,6 +197,20 @@ export default {
             this.dialogVisible = false
         },
         remark() {
+            if (!this.remarkResult && (!this.selectPro || !this.selectPro2)) {
+                this.$message({
+                    type: 'error',
+                    message: '请选择报销来源的项目'
+                })
+                return
+            }
+            if (!!this.remarkResult && !this.remarkReason) {
+                this.$message({
+                    type: 'error',
+                    message: '请输入驳回原因'
+                })
+                return
+            }
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request
                 .post('/test/approveRequestion')
@@ -186,11 +218,12 @@ export default {
                 .send({
                     id: this.requestion.id,
                     uid: this.$store.state.user.id,
+                    oldProject: this.requestion.project,
                     requester: this.requestion.requester,
                     description: this.requestion.description,
                     state: this.requestion.state,
                     operate: this.remarkResult,
-                    reason: this.reason,
+                    reason: this.remarkReason,
                     acountMoney: this.acountMoney(),
                     project: this.selectPro,
                     project2: this.selectPro2
@@ -263,6 +296,7 @@ export default {
                         .send({
                             requestion: this.requestion.id,
                             uid: this.$store.state.user.id,
+                            project: this.requestion.project,
                             ...rem
                         })
                         .end((err, res) => {

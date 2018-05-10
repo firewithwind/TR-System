@@ -12,20 +12,22 @@
                 </el-card>
                 <el-card class="aside-card">
                     <div class="aside-header" slot="header" style="padding: 0">
-                        <span>报销政策</span>
-                        <el-button class="more" type="text">更多></el-button>
+                        <span>报销政策&公告</span>
+                        <el-button class="more" type="text" @click="goRouter('policy')">更多></el-button>
                     </div>
-                    <div  v-for="policy in policys" :key="policy.text" class="aside-content" @click="goRouter(policy.path)">
-                        <span>{{policy.text}}</span>
+                    <span v-if="!policys.length">暂无数据哦~</span>
+                    <div  v-for="policy in policys" :key="policy.id" class="aside-content" @click="goRouter(`/policy/detail?id=${policy.id}`)">
+                        <span>{{policy.title}}</span>
                     </div>
                 </el-card>
                 <el-card class="aside-card">
                     <div class="aside-header" slot="header">
                         <span>常见问题</span>
-                        <el-button class="more" type="text">更多></el-button>
+                        <el-button class="more" type="text" @click="goRouter('question')">更多></el-button>
                     </div>
-                    <div class="aside-content">
-                        <span>常见问题解决方案</span>
+                    <span v-if="!questions.length">暂无数据哦~</span>
+                    <div v-for="question in questions" :key="question.id" class="aside-content" @click="goRouter(`/question/detail?id=${question.id}`)">
+                        <span>{{question.title}}</span>
                     </div>
                 </el-card>
             </el-aside>
@@ -41,11 +43,19 @@
                     </div>
                     <div class="main-card bulletin">
                         <div class="header">
-                            <span>公告</span>
-                            <el-button class="more" type="text">更多></el-button>
+                            <span>通知</span>
+                            <el-button class="more" type="text" @click="goRouter('announcement')">更多></el-button>
                         </div>
                         <div class="content">
-                            <div class="no-bulletin">暂无公告~</div>
+                            <div v-if="!announcements.length" class="no-bulletin">暂无通知~</div>
+                            <div class="entry" v-for="item in announcements" :key="item.id" @click="goRouter(item.url)">
+                                <span class="title">{{item.title}}</span>
+                                <el-tooltip class="item" effect="dark" placement="bottom">
+                                    <div slot="content" v-html="item.data"></div>
+                                    <span class="cont" v-html="item.data"></span>
+                                </el-tooltip>
+                                <span class="time">{{formatDate(item.occurTime)}}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -59,6 +69,7 @@
 
 <script>
 import Process from '@/components/Process'
+import {formatDate} from '@/utils'
 
 export default {
     name: 'Index',
@@ -67,24 +78,9 @@ export default {
     },
     data () {
         return {
-            policys: [
-                {
-                    text: '报销注意事项',
-                    path: '/policy/precautions'
-                },
-                {
-                    text: '差旅管理办法',
-                    path: '/policy/precautions'
-                },
-                {
-                    text: '交通工具等级标准',
-                    path: '/policy/precautions'
-                },
-                {
-                    text: '住宿标准',
-                    path: '/policy/precautions'
-                }
-            ]
+            policys: [],
+            announcements: [],
+            questions: []
         }
     },
     created() {
@@ -92,10 +88,74 @@ export default {
         if (!id) {
             this.$router.replace('/login')
         }
+        this.getPolicy()
+        this.getAnnouncement()
+        this.getQuestion()
     },
     methods: {
+        formatDate,
         goRouter(path) {
             this.$router.push(path)
+        },
+        getPolicy() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getPolicy')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    limit: 5,
+                    offset: 0
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.policys = res.body.data
+                    }
+                })
+        },
+        getQuestion() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getQuestion')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    limit: 5,
+                    offset: 0
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.questions = res.body.data
+                    }
+                })
+        },
+        getAnnouncement() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getAnnouncement')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    limit: 6,
+                    offset: 0
+                })
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.announcements = res.body.data
+                    }
+                })
         }
     }
 }
@@ -146,10 +206,29 @@ export default {
                         margin-top: -0.04rem
                 .content
                     padding: .2rem 0
+                    font-size: .14rem
                     .no-bulletin
                         font-size: .16rem
                         padding: .76rem 0
                         text-align: center
+                    .entry
+                        display: flex
+                        cursor: pointer
+                        border-bottom: 1px dotted #EBEEF5
+                        .title
+                            display: inline-block
+                            flex: 0 0 auto
+                            width: .7rem
+                            font-weight: bold
+                        .cont
+                            display: inline-block
+                            flex: 1 1 auto
+                            overflow: hidden
+                            text-overflow: ellipsis
+                        .time
+                            display: inline-block
+                            flex: 0 0 auto
+                            width: .8rem
     .footer
         position: fixed
         bottom: 0
