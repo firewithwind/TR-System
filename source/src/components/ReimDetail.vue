@@ -164,7 +164,10 @@ export default {
                 })
                 .end((err, res) => {
                     if (!!err) {
-                        console.log(err)
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
                     } else {
                         this.$message({
                             type: 'success',
@@ -278,6 +281,7 @@ export default {
             this.requestion = this.opts[val]
         },
         addNewReim(rem) {
+            console.log(rem)
             if (this.$store.state.user.id === this.requestion.requester) {
                 if (!rem) {
                     this.$message({
@@ -310,7 +314,11 @@ export default {
                                     type: 'success',
                                     message: '添加成功'
                                 })
-                                this.reims.push(rem)
+                                this.reims.push({
+                                    ...rem,
+                                    id: res.body.id,
+                                    project: this.requestion.project
+                                })
                             }
                         })
                 }
@@ -321,7 +329,7 @@ export default {
                 })
             }
         },
-        deleteReim(id, index) {
+        deleteReim(reim, index) {
             this.$confirm('将会删除报销条目, 是否继续?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
@@ -332,11 +340,16 @@ export default {
                     .post('/test/deleteReim')
                     .set('Authorization', `Bearer ${token}`)
                     .send({
-                        id: id
+                        id: reim.id,
+                        project: reim.project,
+                        money: reim.money
                     })
                     .end((err, res) => {
                         if (!!err) {
-                            console.log(err)
+                            this.$message({
+                                type: 'error',
+                                message: err.response.text
+                            })
                         } else {
                             this.reims.splice(index, 1)
                             this.$message({

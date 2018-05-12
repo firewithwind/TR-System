@@ -116,11 +116,11 @@
                 </tr>
                 <tr>
                     <td class="label">课题组长审批意见</td>
-                    <th colspan="3" class="value">{{requestion.destination}}</th>
+                    <th colspan="3" class="value">同意</th>
                 </tr>
                 <tr>
                     <td class="label">中心领导审批意见</td>
-                    <th colspan="3" class="value">{{requestion.destination}}</th>
+                    <th colspan="3" class="value">同意</th>
                 </tr>
             </table>
         </div>

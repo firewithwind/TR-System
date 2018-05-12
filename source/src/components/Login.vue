@@ -62,10 +62,8 @@
                 <input v-model="registerInfor.Email" placeholder="输入邮箱地址">
             </div>
             <div class="laboratory">
-                <span class="label">实验室</span>
-                <el-select v-model="registerInfor.laboratory" class="laboratory" size="mini">
-                    <el-option label="虚拟化技术研究室" value="1"></el-option>
-                </el-select>
+                <span class="label">研究室</span>
+                <input v-model="registerInfor.laboratory" placeholder="输入所在研究室">
             </div>
             <div class="submit" @click="register">
                 <el-button>注册</el-button>
@@ -109,7 +107,7 @@ export default {
         },
         checkInputPhone(input) {
             let pattrn = /[0-9]/g
-            if (!pattrn.test(input.data) || this.registerInfor.phone.length > 11) {
+            if (input.data && !pattrn.test(input.data) || this.registerInfor.phone.length > 11) {
                 this.registerInfor.phone = this.registerInfor.phone.slice(0, -1)
             }
         },
@@ -150,6 +148,7 @@ export default {
                             this.$store.commit('setUser', res.body.result)
                             this.$store.commit('setToken', res.body.token)
                             localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
+                            localStorage.setItem('user', res.body.result.id)
                             if (this.param.type === 'manager') {
                                 location.href = location.origin + '/#/manage?token=' + res.body.token + Math.random().toFixed(3)
                             } else {

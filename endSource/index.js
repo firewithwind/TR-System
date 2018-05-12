@@ -51,12 +51,12 @@ const fileType = [
     'xlsx',
     'xls',
     'doc',
-    'docx'
+    'docx',
 ]
 
 app.use(koaBody())
 app.use(jwtKoa({secret}).unless({
-    path: [/\/login/, /\/register/, /^[\/]?$/, /\/static/] //数组中的路径不需要通过jwt验证
+    path: [/\/login/, /\/register/, /^[\/]?$/, /^\/manage[/]?$/, /\/static/] //数组中的路径不需要通过jwt验证
 }))
 app.use(async(ctx, next) => {
     let param = ctx.request.body
@@ -74,17 +74,17 @@ app.use(async(ctx, next) => {
             tokenResult = await verify(reqToken, secret)
         }
         switch (true) {
-            case /^[\/]?$/.test(ctx.url):
+            case /^[\/]?[index]?[\/]?$/.test(ctx.url):
                 ctx.url = `/static/dist/index.html`
                 await next()
                 break
-            case /^\/mamager/.test(ctx.url):
-                ctx.url = '/static/manager/index.html'
+            case /^\/manage/.test(ctx.url):
+                ctx.url = '/static/manage/index.html'
                 await next()
                 break
             case /\/login/.test(ctx.url):
                 if (!param.id || !param.pwd) {
-                    ctx.throw(400, 'bad userID or password')
+                    ctx.throw(400, '密码错误')
                 } else {
                         select = `select id, name, phone, Email, level, avatar, laboratory
                         from user where id = "${param.id}" or phone = "${param.id}" and pwd = "${param.pwd}"`
@@ -93,6 +93,9 @@ app.use(async(ctx, next) => {
                             ctx.throw(400, result.msg)
                         } else {
                             let userToken = {...result.body[0]}
+                            if (!result.body[0]) {
+                                ctx.throw(400, '登入失败，请检查用户名和密码')
+                            }
                             token = jwt.sign(userToken, secret, {expiresIn: '10h'})
                             ctx.body = {
                                 result: result.body[0],
@@ -121,7 +124,7 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'bad register information')
                 } else {
                     select = `insert into user
-                            values("${param.id}", "${param.name}", "${param.phone}", "${param.Email}", 0, "${param.pwd}", NULL, ${param.laboratory}, ${param.jobTitle}, NULL)`
+                            values("${param.id}", "${param.name}", "${param.phone}", "${param.Email}", 0, "${param.pwd}", "/static/avatar/timg.jpeg", "${param.laboratory}", "${param.jobTitle}", NULL)`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -448,12 +451,10 @@ app.use(async(ctx, next) => {
                     if (!!result.data.create.state) {
                         // 删除原头像
                         if (!!tokenResult.avatar) {
-                            try {
+                            if (tokenResult.avatar !== '/static/avatar/timg.jpeg') {
                                 fs.unlink(path.resolve(__dirname, 'static/' + tokenResult.avatar.split('static/')[1]), (err) => {
                                     console.log(err)
                                 })
-                            } catch(e) {
-                                console.log(e)
                             }
                         }
                         ctx.body = {
@@ -783,12 +784,14 @@ app.use(async(ctx, next) => {
                             if (param.oldProject !== param.project) {
                                 select.push(
                                             `update reimbursement set project = ${param.project} where requestion = ${param.id} and type != 34`,
-                                            `update project set alloverhead = alloverhead - ${param.acountMoney[0]} where id = ${param.oldProject}`)
+                                            `update project set alloverhead = alloverhead - ${param.acountMoney[0]} where id = ${param.oldProject}`,
+                                            `update project set alloverhead = alloverhead + ${param.acountMoney[0]} where id = ${param.project}`)
                             }
                             if (param.oldProject !== param.project2) {
                                 select.push(
                                             `update reimbursement set project = ${param.project2} where requestion = ${param.id} and type = 34`,
-                                            `update project set alloverhead = alloverhead - ${param.acountMoney[1]} where id = ${param.oldProject}`)
+                                            `update project set alloverhead = alloverhead - ${param.acountMoney[1]} where id = ${param.oldProject}`,
+                                            `update project set alloverhead = alloverhead + ${param.acountMoney[1]} where id = ${param.project2}`)
                             }
                             result = await querySQL(select)
                             if (!!result.state) {
@@ -909,8 +912,7 @@ app.use(async(ctx, next) => {
                     result =await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
-                            type: 0,
-                            msg: 'success'
+                            id: result.body[0].body.insertId
                         }
                     } else {
                         ctx.throw(400, '添加失败，请检查参数')
@@ -921,7 +923,7 @@ app.use(async(ctx, next) => {
                 break
             case /\/getReimbursements/.test(ctx.url):
                 if (!!param.id) {
-                    select = `select r.*, p.id, p.title from reimbursement r join project p on r.project = p.id where requestion=${param.id}`
+                    select = `select r.*, p.id as pid, p.title from reimbursement r join project p on r.project = p.id where requestion=${param.id}`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = result.body
@@ -993,7 +995,9 @@ app.use(async(ctx, next) => {
                 break
             case /\/deleteReim/.test(ctx.url):
                 if (!!param.id) {
-                    select = `delete from reimbursement where id = ${param.id}`
+                    select = [
+                        `delete from reimbursement where id = ${param.id}`,
+                        `update project set alloverhead = alloverhead - ${param.money} where id = ${param.project}`]
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {

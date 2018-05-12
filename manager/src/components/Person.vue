@@ -107,6 +107,7 @@ export default {
                             message: '修改成功'
                         })
                         this.persons[this.userIndex].level = this.currentPerson.level
+                        this.dialogVisible = false
                     }
                 })
         },

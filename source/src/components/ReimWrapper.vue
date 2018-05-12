@@ -66,7 +66,7 @@
                 <el-table-column
                     label="金额">
                     <template slot-scope="scope">
-                        {{scope.row.money.toFixed(2)}}
+                        {{(+scope.row.money).toFixed(2)}}
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -82,7 +82,7 @@
                     v-if="requestion.state>=2&&requestion.state<4&&!isRemark"
                     label="操作">
                     <template slot-scope="scope">
-                        <el-button type="text" style="color: rgb(255, 208, 75)" @click="deleteReim(scope.row.id, scope.$index)">删除</el-button>
+                        <el-button type="text" style="color: rgb(255, 208, 75)" @click="deleteReim(scope.row, scope.$index)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -413,6 +413,7 @@ export default {
             height: 0
             visibility:hidden
     .picture-content
+        list-style: none
         position: relative
         width: 1.48rem
         height: 1.48rem

@@ -16,7 +16,7 @@ export const ways = [
         value: 33
     },
     {
-        label: '其它',
+        label: '其它（市内交通）',
         value: 34
     }
 ]

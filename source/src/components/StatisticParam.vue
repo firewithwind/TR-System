@@ -97,6 +97,9 @@ export default {
         },
         getStatisticDate() {
             let body = {...this.params}
+            if (!body.id) {
+                body.id = this.$store.state.user.id || localStorage.user
+            }
             if (body.id === 'all') {
                 body.id = ''
             }
@@ -104,9 +107,6 @@ export default {
                 body.end = new Date().setHours(0, 0, 0, 0)
                 body.start = new Date(body.end).setMonth(new Date(body.end).getMonth() - 9)
                 this.params.type = this.type = body.type = 3
-            }
-            if (!body.id) {
-                body.id = this.$store.state.user.id || localStorage.user
             }
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             this.$request

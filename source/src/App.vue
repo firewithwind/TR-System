@@ -45,6 +45,9 @@ export default {
         }
     },
     created() {
+        if (location.href.split('#')[1] && location.href.split('#')[1] === '/') {
+            this.$router.replace('/index')
+        }
         let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
         if (!token) {
             this.$router.push('/login')

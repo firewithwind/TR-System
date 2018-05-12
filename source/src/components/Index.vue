@@ -84,8 +84,8 @@ export default {
         }
     },
     created() {
-        let id = localStorage.getItem('user')
-        if (!id) {
+        let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+        if (!token) {
             this.$router.replace('/login')
         }
         this.getPolicy()
