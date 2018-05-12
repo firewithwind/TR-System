@@ -64,8 +64,10 @@
                     label="费用描述">
                 </el-table-column>
                 <el-table-column
-                    prop="money"
                     label="金额">
+                    <template slot-scope="scope">
+                        {{scope.row.money.toFixed(2)}}
+                    </template>
                 </el-table-column>
                 <el-table-column
                     prop="note"
@@ -177,46 +179,10 @@
         <el-dialog :visible.sync="dialogPicture">
             <img width="100%" :src="dialogImageUrl" alt="">
         </el-dialog>
-<!--         <div id="printReimInfo" style="width:100%;font-size:14px;text-align:center;">
-            <span style="font-weight: bold">网络与信息安全技术研究中心（NIST）差旅费用报销单 单号</span>
-            <table border="1" style="width:80%;margin:15px auto 0;">
-                <tr>
-                    <td class="label">出差人员</td>
-                    <td class="value">{{requestion.name}}</td>
-                    <td class="label">出发时间</td>
-                    <td class="value">{{formatDate(requestion.startTime)}}</td>
-                </tr>
-                <tr>
-                    <td class="label">所属研究室</td>
-                    <td class="value">{{requestion.laboratory}}</td>
-                    <td class="label">主要工作内容</td>
-                    <td class="value">{{requestion.description}}</td>
-                </tr>
-            </table>
-            <p style="width:80%;margin:0 auto;text-align:left;font-weight:bold">项目卡号　（不填）</p>
- -->            <!-- <table border="1" style="width:80%;margin:0 auto">
-                <tr>
-                    <th>序号</th>
-                    <th>费用类型</th>
-                    <th>发生时间</th>
-                    <th>费用描述</th>
-                    <th>金额</th>
-                    <th>备注</th>
-                </tr>
-                <tr v-for="(reim, index) in reims" :key="reim.id">
-                    <td>{{index}}</td>
-                    <td>{{feeTypesEnum[reim.type]}}</td>
-                    <td>{{formatDate(reim.startDate)}}</td>
-                    <td>{{reim.desc}}</td>
-                    <td>{{reim.money}}</td>
-                    <td>{{reim.note}}</td>
-                </tr>
-            </table> -->
-        <!-- </div> -->
     </div>
 </template>
 <script>
-import {formatTime, formatDate} from '@/utils'
+import {formatTime, formatDate, resolveFloat} from '@/utils'
 import {ways, feeTypes, steps, feeTypesEnum, seat} from '@/dataMap'
 export default {
     props: {
@@ -284,14 +250,14 @@ export default {
     computed: {
         acountMoney() {
             if (this.reims.length === 0) {
-                return 0
+                return '0.00'
             } else if (this.reims.length === 1) {
-                return this.reims[0].money
+                return this.reims[0].money.toFixed(2)
             }
             return this.reims.reduce((base, reim) => {
                 base = base.money || base
-                return base + reim.money
-            })
+                return resolveFloat(base, reim.money)
+            }).toFixed(2)
         },
         isSelf() {
             return this.$store.state.user.id === this.requestion.requester
@@ -326,30 +292,6 @@ export default {
                         window.open(res.text)
                     }
                 })
-            // let style = `
-            // <style>
-            // table {
-            //     font-size: 14px;
-            // }
-            // .label {
-            //     text-align: center;
-            // }
-            // .value {
-            //     text-indent: 2px;
-            //     text-align: left;
-            //     font-weight: 400;
-            // }
-            // .desc {
-            //     height: 100px;
-            // }
-            // </style>`
-            // let newWindow = window.open('_blank')
-            // let codestr = document.getElementById('printReimInfo').outerHTML
-            // newWindow.document.write(style)
-            // newWindow.document.write(codestr)
-            // newWindow.document.close()
-            // newWindow.print()
-            // newWindow.close()
         },
         exportFinanceReim() {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))

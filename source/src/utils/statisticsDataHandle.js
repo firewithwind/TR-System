@@ -1,4 +1,4 @@
-import {formatDate} from '@/utils'
+import {formatDate, resolveFloat} from '@/utils'
 import {feeTypesEnum} from '@/dataMap'
 
 // 获取按月统计月份范围
@@ -52,9 +52,9 @@ export function setPersonMonthsChartsData(data, l) {
         let date = formatDate(item.startDate).split('/')
         let position = l.indexOf(date[0] + '-' + date[1])
         if (position !== -1) {
-            allResult[position] += Number(item.money)
+            allResult[position] = resolveFloat(allResult[position], Number(item.money))
             if (item.state >= 4) {
-                result[position] += Number(item.money)
+                result[position] = resolveFloat(result[position], Number(item.money))
             }
         }
     })
@@ -79,9 +79,9 @@ export function setProjectsChatsData(data) {
                 result.data.push(+item.money)
             }
         } else {
-            result.allData[index] += +item.money
+            result.allData[index] = resolveFloat(result.allData[index], +item.money)
             if (item.state >= 4) {
-                result.data[index] += +item.money
+                result.data[index] = resolveFloat(result.data[index], +item.money)
             }
         }
     })
@@ -100,7 +100,7 @@ export function setTypeChartsData(data) {
                 name: `${item.type}:${feeTypesEnum[item.type]}`
             })
         } else {
-            result[index].value += +item.money
+            result[index].value = resolveFloat(result[index].value, +item.money)
         }
     })
     return {
@@ -116,9 +116,9 @@ export function setYearData(data, l) {
         let year = new Date(+item.startDate).getFullYear()
         let index = l.indexOf(year)
         if (index !== -1) {
-            allResult[index] += +item.money
+            allResult[index] = resolveFloat(allResult[index], +item.money)
             if (item.state >= 4) {
-                result[index] += +item.money
+                result[index] = resolveFloat(result[index], +item.money)
             }
         }
     })

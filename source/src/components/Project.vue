@@ -74,7 +74,9 @@
                 </el-table>
                 <el-pagination
                     layout="prev, pager, next"
-                    :total="total">
+                    :total="total"
+                    :page-size="limit.limit"
+                    @current-change="changePage">
                 </el-pagination>
             </el-main>
         </el-container>
@@ -112,6 +114,10 @@ export default {
     },
     methods: {
         formatDate,
+        changePage(cpage) {
+            this.limit.offset = 20 * (cpage - 1)
+            this.getFindProjects()
+        },
         updateProject(row) {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
             if (this.update) {

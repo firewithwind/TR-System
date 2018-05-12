@@ -50,6 +50,10 @@
                 <input v-model="registerInfor.name" placeholder="输入真实姓名">
             </div>
             <div class="input-wrapper">
+                <span class="label">职称</span>
+                <input v-model="registerInfor.jobTitle" placeholder="输入职称">
+            </div>
+            <div class="input-wrapper">
                 <span class="label">手机</span>
                 <input v-model="registerInfor.phone" placeholder="输入手机号码" @input="checkInputPhone">
             </div>
@@ -70,7 +74,7 @@
     </div>
 </template>
 <script>
-import {createSocket} from '@/utils'
+import {createSocket, query} from '@/utils'
 export default {
     data() {
         return {
@@ -83,13 +87,18 @@ export default {
                 confirm: '',
                 name: '',
                 phone: '',
-                Email: ''
+                Email: '',
+                jobTitle: ''
             },
             loginInfor: {
                 id: '',
                 pwd: ''
-            }
+            },
+            param: {}
         }
+    },
+    created() {
+        this.param = query(location.href.split('?')[1])
     },
     methods: {
         checkInputID(input) {
@@ -141,7 +150,11 @@ export default {
                             this.$store.commit('setUser', res.body.result)
                             this.$store.commit('setToken', res.body.token)
                             localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
-                            this.$router.push('/index')
+                            if (this.param.type === 'manager') {
+                                location.href = location.origin + '/#/manage?token=' + res.body.token + Math.random().toFixed(3)
+                            } else {
+                                this.$router.push('/index')
+                            }
                         }
                     })
             }

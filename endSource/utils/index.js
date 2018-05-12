@@ -80,6 +80,47 @@ const seat = {
         }
     ]
 }
+// 浮点数运算
+function resolveFloat(base, increment, operator = '+') {
+    if (Array.isArray(base)) {
+        operator = increment || operator
+        return base.reduce((first, second) => {
+            return resolveFloat(first, second, operator)
+        })
+    } else {
+        // 转换成字符串
+        base = '' + base
+        increment = '' + increment
+        // 计算小数点移动位数
+        let dig = base.split('.')[1] && base.split('.')[1].length || 0
+        let dig2 = increment.split('.')[1] && increment.split('.')[1].length || 0
+        let max = Math.max(dig, dig2)
+        let diff = dig - dig2
+        // 位数补全
+        base = base.replace('.', '')
+        increment = increment.replace('.', '')
+        if (diff >= 0) {
+            let cm = Math.pow(10, diff)
+            increment = Number(increment) * cm
+        } else {
+            let cm = Math.pow(10, -diff)
+            base = Number(base) * cm
+        }
+        switch (operator) {
+            case '+':
+                base = (+base) + (+increment)
+                return base / Math.pow(10, max)
+            case '-':
+                base = (+base) - (+increment)
+                return base / Math.pow(10, max)
+            case '*':
+                base = (+base) * (+increment)
+                return base / Math.pow(10, dig + dig2)
+            default:
+                throw new Error('unexpected operator')
+        }
+    }
+}
 
 function nToC(num) {
     num = +num
@@ -318,26 +359,6 @@ exports.createPersonReim = function (reims, time, requestion) {
             v: '报销打款时间',
             s: cellStyle
         },
-        // '!rows':[
-        //     { hpt: 28, hpx: 28 },
-        //     { hpt: 45, hpx: 45 },
-        //     { hpt: 60, hpx: 60 },
-        //     { hpt: 33, hpx: 33 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 },
-        //     { hpt: 30.5, hpx: 30.5 }
-        // ],
         '!merges': [
             {
                 s: {
@@ -690,7 +711,7 @@ exports.createFinanceReim = function (reims, time, requestion) {
         }
         let result = transportation.reduce((base, reim) => {
             base = base.money || base
-            return base + reim.money
+            return resolveFloat(base, reim.money)
         })
         return result.toFixed(2)
     }
@@ -702,14 +723,14 @@ exports.createFinanceReim = function (reims, time, requestion) {
         }
         let result = hotel.reduce((base, reim) => {
             base = base.money || base
-            return base + reim.money
+            return resolveFloat(base, reim.money)
         })
         return result.toFixed(2)
     }
     let otherAcount = function() {
         let result = new Array(6).fill(0)
         other.forEach(item => {
-            result[item.type%20] += item.money
+            result[item.type%20] = resolveFloat(result[item.type%20], item.money)
         })
         return result
     }
@@ -717,7 +738,8 @@ exports.createFinanceReim = function (reims, time, requestion) {
     let cellStyle = {
         font: {
             name: '宋体',
-            sz: '10.5'
+            sz: '10.5',
+            bold: true
         },
         alignment: {
             horizontal: 'center',
@@ -751,6 +773,7 @@ exports.createFinanceReim = function (reims, time, requestion) {
             return base + incre
         }).toFixed(2)
     }
+    let allMoney = resolveFloat([+transportAcount(), +hotelAcount(), +otherAcountMoney])
     let st = {
         '!ref': 'A1:L' + (10 + trL),
         A1: {
@@ -853,7 +876,7 @@ exports.createFinanceReim = function (reims, time, requestion) {
         },
         F4: {
             t: 's',
-            v: requestion.description || '',
+            v: '科研',
             s: cellStyle
         },
         G4: {
@@ -1033,12 +1056,12 @@ exports.createFinanceReim = function (reims, time, requestion) {
         },
         ['D' + (8 + trL)]: {
             t: 's',
-            v: nToC((+transportAcount() + +hotelAcount() + +otherAcountMoney)) + '元',
+            v: nToC(allMoney) + '元',
             s: cellStyle
         },
         ['J' + (8 + trL)]: {
             t: 's',
-            v: `￥${(+transportAcount() + +hotelAcount() + +otherAcountMoney).toFixed(2) || '0.00'}`,
+            v: `￥${allMoney.toFixed(2) || '0.00'}`,
             s: cellStyle
         },
         ['F' + (10 + trL)]: {

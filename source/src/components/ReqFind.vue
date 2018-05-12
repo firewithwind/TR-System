@@ -29,7 +29,7 @@
                     end-placeholder="查询结束日期">
                 </el-date-picker>
             </el-form-item>
-            <el-button class="find" type="primary" @click="getFindRequestion">查询</el-button>
+            <el-button class="find" type="primary" @click="getFindRequestion(1)">查询</el-button>
         </el-form>
         <p class="split">提示：将默认搜索用户自己的所有申请单</p>
         <el-table :data="requestions">
@@ -75,7 +75,9 @@
         <div class="page-wrapper">
             <el-pagination
             layout="prev, pager, next"
-            :total="acount">
+            :total="acount"
+            :page-size="limit.count"
+            @current-change="changePage">
             </el-pagination>
         </div>
     </div>
@@ -100,7 +102,7 @@ export default {
     },
     methods: {
         formatDate,
-        getFindRequestion() {
+        getFindRequestion(cpage) {
             if (this.daterange && !!this.daterange.length) {
                 this.param.startDate = new Date(this.daterange[0]).getTime() + ''
                 this.param.endDate = new Date(this.daterange[1]).getTime() + ''
@@ -121,11 +123,17 @@ export default {
                 .send({
                     ...this.param,
                     user: this.$store.state.user.id,
-                    limit: this.limit
+                    limit: {
+                        offset: 10 * (cpage - 1),
+                        count: 10
+                    }
                 })
                 .end((err, res) => {
                     if (!!err) {
-                        console.log(err)
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
                     } else {
                         this.requestions = res.body.results
                         this.acount = res.body.acount
@@ -137,6 +145,9 @@ export default {
                         }
                     }
                 })
+        },
+        changePage(cpage) {
+            this.getFindRequestion(cpage)
         },
         goForDetail(id) {
             this.$router.push('/reimbursement/index/detail?id=' + id)

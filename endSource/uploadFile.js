@@ -37,7 +37,7 @@ function getSuffixName(fileName) {
  * @param  {object} options 文件上传参数 fileType文件类型， path文件存放路径
  * @return {promise}
  */
-function uploadFile(ctx, options, secondPath) {
+function uploadFile(ctx, options, secondPath, defaultFileName) {
     let req = ctx.req
     let res = ctx.res
     let busboy = new Busboy({ headers: req.headers })
@@ -54,7 +54,7 @@ function uploadFile(ctx, options, secondPath) {
 
         // 解析请求文件事件
         busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-            let fileName = Math.random().toString(16).substr(2) + '.' + getSuffixName(filename)
+            let fileName = defaultFileName || Math.random().toString(16).substr(2) + '.' + getSuffixName(filename)
             let _uploadFilePath = path.join(filePath, fileName)
             let saveTo = path.join(_uploadFilePath)
 
@@ -66,7 +66,7 @@ function uploadFile(ctx, options, secondPath) {
                 result.success = true
                 result.message = '文件上传成功'
                 result.data = {
-                    pictureUrl: `${secondPath}/${fileName}`
+                    fileUrl: `${secondPath}/${fileName}`
                 }
                 resolve(result)
             })

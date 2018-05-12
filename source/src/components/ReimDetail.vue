@@ -30,7 +30,7 @@
                 <el-radio v-model="remarkResult" :label="1">驳回</el-radio>
             </template>
             <div v-if="!remarkResult">
-                <span>选择报销项目：</span>
+                <span>请选择报销项目：</span>
                 <el-select v-model="selectPro">
                     <el-option v-for="pro in projects"
                             :value="pro.id"
@@ -40,7 +40,7 @@
                 </el-select>
             </div>
             <div v-if="!remarkResult" style="margin-top: .1rem">
-                <span>选择室内交通报销项目：</span>
+                <span>市内交通报销项目：</span>
                 <el-select v-model="selectPro2">
                     <el-option v-for="pro in projects"
                             :value="pro.id"
@@ -301,7 +301,10 @@ export default {
                         })
                         .end((err, res) => {
                             if (!!err) {
-                                console.log(err)
+                                this.$message({
+                                    type: 'error',
+                                    message: err.response.text
+                                })
                             } else {
                                 this.$message({
                                     type: 'success',

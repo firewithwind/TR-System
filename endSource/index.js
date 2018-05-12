@@ -48,7 +48,10 @@ const fileType = [
     'wma',
     'wmv',
     'xml',
-    'xlsx'
+    'xlsx',
+    'xls',
+    'doc',
+    'docx'
 ]
 
 app.use(koaBody())
@@ -118,7 +121,7 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'bad register information')
                 } else {
                     select = `insert into user
-                            values("${param.id}", "${param.name}", "${param.phone}", "${param.Email}", 0, "${param.pwd}", NULL, ${param.laboratory})`
+                            values("${param.id}", "${param.name}", "${param.phone}", "${param.Email}", 0, "${param.pwd}", NULL, ${param.laboratory}, ${param.jobTitle}, NULL)`
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -212,6 +215,54 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'Not Found')
                 }
                 break
+            case /\/getPolicys/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+
+                    select = `select count(*) from policy limit ${param.offset}, ${param.limit}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            total: result.body[0]['count(*)']
+                        }
+                    } else {
+                        ctx.throw(400, '获取信息总数失败')
+                    }
+                    select = `select id, title, occurTime from policy order by occurTime desc limit ${param.offset}, ${param.limit}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body.result = result.body
+                    } else {
+                        ctx.throw(400, '获取信息列表失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
+                }
+                break
+            case /\/getPolicyFiles/.test(ctx.url):
+                select = `select * from policyFile where policy = ${param.id}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = result.body
+                } else {
+                    ctx.throw(400, '获取信息失败')
+                }
+                break
+            case /\/deletePolicyFile/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    fs.unlink(path.resolve(__dirname, `static/${param.url.split('static/')[1]}`), (err) => {
+                        console.log(err)
+                    })
+                    select = `delete from policyFile where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '删除失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
+                }
+                break
             case /\/getPolicyDetail/.test(ctx.url):
                 if (!!param.id) {
                     select = `select * from policy where id = ${param.id}`
@@ -223,6 +274,88 @@ app.use(async(ctx, next) => {
                     }
                 } else {
                     ctx.throw(400, '参数错误')
+                }
+                break
+            case /\/uploadPolicyFile/.test(ctx.url):
+                var serverFilePath = path.join( __dirname, 'static/policy')
+                // 上传文件事件
+                result = await uploadFile( ctx, {
+                    fileType: 'album',
+                    path: serverFilePath
+                }, 'policy')
+                if (!!result.data.fileUrl) {
+                    var query = qs.parse(ctx.url.split('?')[1])
+                    select = `insert into policyFile values(NULL, "http://${ctx.host}/static/${result.data.fileUrl}", "${query.id}")`
+                    result.data.create = await querySQL(select)
+                    if (!!result.data.create.state) {
+                        ctx.body = {
+                            id: result.data.create.body.insertId,
+                            url: `http://${ctx.host}/static/${result.data.fileUrl}`
+                        }
+                    } else {
+                        fs.unlink(path.resolve(__dirname, 'static/' + result.data.fileUrl), (err) => {
+                            console.log(err)
+                        })
+                        ctx.throw(400, result.body.create.msg)
+                    }
+                } else {
+                    ctx.throw(500, '上传失败')
+                }
+                break
+            case /\/insertPolicy/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    var time = Date.now()
+                    select = `insert into policy
+                            values(NULL, "${param.title}", "${time}", '${param.data}')`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            ...param,
+                            id: result.body.insertId,
+                            occurTime: time
+                        }
+                    } else {
+                        ctx.throw(400, '创建失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
+                }
+                break
+            case /\/deletePolicy/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `delete from policy where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        select = `select url from policyFile where policy = ${param.id}`
+                        result = await querySQL(select)
+                        if (!!result.state) {
+                            result.body.forEach(item => {
+                                fs.unlink(path.resolve(__dirname, 'static/' + item.url.split('static/')[1]), err => {
+                                    console.log(err)
+                                })
+                            })
+                            select = `delete from policyFile where policy = ${param.id}`
+                            querySQL(select)
+                        }
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '删除失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
+                }
+                break
+            case /\/updatePolicy/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `update policy set data = '${param.data}', title = "${param.title}" where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '更新失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
                 }
                 break
             case /\/getPolicy$/.test(ctx.url):
@@ -239,7 +372,7 @@ app.use(async(ctx, next) => {
                         total: total.body[0]['count(*)']
                     }
                 } else {
-                    ctx.throw(400, 'Not Found')
+                    ctx.throw(400, '获取信息失败')
                 }
                 break
             case /\/readMessage/.test(ctx.url):
@@ -274,6 +407,34 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'you can not update others information')
                 }
                 break
+            case /\/addProject/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    if (!param.title || !param.funding || !param.description || !param.overflow) {
+                        ctx.throw(400, '参数错误')
+                    }
+                    let time = Date.now()
+                    select = [`insert into project
+                            values(NULL, "${param.title}", ${param.funding}, "${param.description}", 0, "${time}", 0, ${param.overflow})`,
+                            `insert into announcement values(NULL, '项目通知', '<b>${param.name}</b>创建了名为<b>${param.title}</b>的项目', '${time}', '/project')`]
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '添加失败')
+                    }
+                } else {
+                    ctx.throw(400, '没有权限')
+                }
+                break
+            case /\/updateProject/.test(ctx.url):
+                select = `update project set description = "${param.description}", funding = ${param.funding}, overflow = ${param.overflow} where id = ${param.id}`
+                result = await querySQL(select)
+                if (!!result.state) {
+                    ctx.body = 'success'
+                } else {
+                    ctx.throw(400, '更新失败')
+                }
+                break
             case /\/uploadUserAvatar/.test(ctx.url):
                 var serverFilePath = path.join( __dirname, 'static/avatar')
                 // 上传文件事件
@@ -281,27 +442,91 @@ app.use(async(ctx, next) => {
                     fileType: 'album',
                     path: serverFilePath
                 }, 'avatar')
-                if (!!result.data.pictureUrl) {
-                    select = `update user set avatar = "http://${ctx.host}/static/${result.data.pictureUrl}" where id = "${tokenResult.id}"`
+                if (!!result.data.fileUrl) {
+                    select = `update user set avatar = "http://${ctx.host}/static/${result.data.fileUrl}" where id = "${tokenResult.id}"`
                     result.data.create = await querySQL(select)
                     if (!!result.data.create.state) {
                         // 删除原头像
                         if (!!tokenResult.avatar) {
-                            fs.unlink(path.resolve(__dirname, 'static/' + tokenResult.avatar.split('static/')[1]), (err) => {
-                                console.log(err)
-                            })
+                            try {
+                                fs.unlink(path.resolve(__dirname, 'static/' + tokenResult.avatar.split('static/')[1]), (err) => {
+                                    console.log(err)
+                                })
+                            } catch(e) {
+                                console.log(e)
+                            }
                         }
                         ctx.body = {
-                            url: `http://${ctx.host}/static/${result.data.pictureUrl}`
+                            url: `http://${ctx.host}/static/${result.data.fileUrl}`
                         }
                     } else {
-                        fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl), (err) => {
-                            console.log(err)
-                        })
+                        try {
+                            fs.unlink(path.resolve(__dirname, 'static/' + result.data.fileUrl), (err) => {
+                                console.log(err)
+                            })
+                        } catch(e) {
+                            console.log(e)
+                        }
                         ctx.throw(400, result.body.create.msg)
                     }
                 } else {
                     ctx.throw(500, 'can not upload the picture')
+                }
+                break
+            case /\/updatePersonLevel/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    if (param.level !== '' && !!param.id) {
+                        select = `update user set level = ${param.level} where id = "${param.id}"`
+                        result = await querySQL(select)
+                        if (!!result.state) {
+                            ctx.body = 'success'
+                            // if (io.sockets.connected[spEnum[param.requester]]) {
+                            //     io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
+                            // }
+                        } else {
+                            ctx.throw(400, '修改失败')
+                        }
+                    } else {
+                        ctx.throw(400, '参数错误')
+                    }
+                } else {
+                    ctx.throw(400, '没有权限')
+                }
+                break
+            case /\/getFindPersons/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `select * from user where`
+                    if (!!param.trans.id) {
+                        select += ` id = "${param.trans.id}" and `
+                    }
+                    if (!!param.trans.name) {
+                        select += ` name = "${param.trans.name}" and `
+                    }
+                    if (!!param.trans.jobTitle) {
+                        select += ` jobTitle = "${param.trans.jobTitle}" and `
+                    }
+                    if (param.trans.level !== '') {
+                        select += ` level = "${param.trans.level}" and `
+                    }
+                    select = select.slice(0, -5)
+                    select += ` limit ${param.limit.offset}, ${param.limit.count}`
+                    var total = await querySQL(select.replace('*', 'count(*)'))
+                    if (!!total.state) {
+                        total = total.body[0]['count(*)']
+                    } else {
+                        ctx.throw(400, '查询失败')
+                    }
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = {
+                            total: total,
+                            result: result.body
+                        }
+                    } else {
+                        ctx.throw(400, '查询失败')
+                    }
+                } else {
+                    ctx.throw(400, '权限错误')
                 }
                 break
             case /\/getProjects/.test(ctx.url):
@@ -335,6 +560,7 @@ app.use(async(ctx, next) => {
                 if (step === 0) {
                     select = select.slice(0, -5)
                 }
+                select += ` order by occurTime desc `
                 var total = await querySQL(select.replace('*', 'count(*)'))
                 if (!total.state) {
                     ctx.throw(400, total.msg)
@@ -370,7 +596,7 @@ app.use(async(ctx, next) => {
                         param.endTime + '",' +
                         param.way + ',"' +
                         param.destination + '","' +
-                        param.description + '", NULL, NULL)'
+                        param.description + '", NULL, NULL, NULL)'
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = {
@@ -402,9 +628,6 @@ app.use(async(ctx, next) => {
                             from requestion r join project p on r.project = p.id
                             where r.requester="${tokenResult.id}" and r.state<2`
                     result = await querySQL(select)
-                    // if (io.sockets.connected[spEnum[reqToken]]) {
-                    //     io.sockets.connected[spEnum[reqToken]].send('message')
-                    // }
                     if (!!result.state) {
                         ctx.body = result.body
                     } else {
@@ -656,7 +879,7 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/addReimbursement/.test(ctx.url):
-                if (!!param.requestion) {
+                if (!!param.requestion && !isNaN(+param.money)) {
                     let seat
                     if (!!param.seat) {
                         seat = `"${param.seat}"`
@@ -690,10 +913,10 @@ app.use(async(ctx, next) => {
                             msg: 'success'
                         }
                     } else {
-                        ctx.throw(400, result.msg)
+                        ctx.throw(400, '添加失败，请检查参数')
                     }
                 } else {
-                    ctx.throw(400, 'bad param in requestion')
+                    ctx.throw(400, '参数错误')
                 }
                 break
             case /\/getReimbursements/.test(ctx.url):
@@ -793,18 +1016,22 @@ app.use(async(ctx, next) => {
                         fileType: 'album',
                         path: serverFilePath
                     }, 'invoice')
-                    if (!!result.data.pictureUrl) {
-                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.pictureUrl}", "${Date.now()}")`
+                    if (!!result.data.fileUrl) {
+                        select = `insert into invoice values(NULL, ${query.requestion}, "http://${ctx.host}/static/${result.data.fileUrl}", "${Date.now()}")`
                         result.data.create = await querySQL(select)
                         if (!!result.data.create.state) {
                             ctx.body = {
                                 id: result.data.create.body.insertId,
-                                url: `http://${ctx.host}/static/${result.data.pictureUrl}`
+                                url: `http://${ctx.host}/static/${result.data.fileUrl}`
                             }
                         } else {
-                            fs.unlink(path.resolve(__dirname, 'static/' + result.data.pictureUrl), (err) => {
-                                console.log(err)
-                            })
+                            try {
+                                fs.unlink(path.resolve(__dirname, 'static/' + result.data.fileUrl), (err) => {
+                                    console.log(err)
+                                })
+                            } catch(e) {
+                                console.log(e)
+                            }
                             ctx.throw(400, result.body.create.msg)
                         }
                     } else {

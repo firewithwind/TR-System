@@ -7,12 +7,14 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import request from 'superagent'
 import router from './router'
+import Editor from 'wangeditor'
 
 Vue.use(ElementUI)
 Vue.use(Vuex)
 Vue.config.productionTip = false
 
 Vue.prototype.$request = request
+Vue.prototype.$editor = Editor
 
 const store = new Vuex.Store({
     state: {

@@ -81,7 +81,10 @@ export default {
                         })
                         .end((err, res) => {
                             if (!!err) {
-                                console.log(err)
+                                this.$message({
+                                    type: 'error',
+                                    message: err.response.text
+                                })
                             } else {
                                 this.$message({
                                     type: 'success',

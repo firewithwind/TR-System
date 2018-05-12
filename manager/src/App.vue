@@ -5,15 +5,22 @@
 </template>
 
 <script>
+import {query} from '@/utils'
+
 export default {
     name: 'App',
     data() {
         return {}
     },
     created() {
+        let param = query(location.href.split('?')[1])
+        if (!!param.token) {
+            localStorage.setItem('token', param.token)
+            this.$store.commit('setToken', param.token.slice(0, -5))
+        }
         let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
         if (!token) {
-            location.href = location.host + '/#/login'
+            location.href = location.origin + '/#/login?type=manager'
         } else {
             if (!this.$store.state.user.id) {
                 this.$request
@@ -23,7 +30,7 @@ export default {
                     .end((err, res) => {
                         if (!!err) {
                             if (err.status === 401) {
-                                this.$router.push('login')
+                                location.href = location.origin + '/#/login?type=manager'
                             } else {
                                 this.$message({
                                     type: 'error',
@@ -55,6 +62,5 @@ export default {
   -moz-osx-font-smoothing: grayscale
   text-align: center
   color: #2c3e50
-  margin-top: .6rem
   font-size: .14rem
 </style>

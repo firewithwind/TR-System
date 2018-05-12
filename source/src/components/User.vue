@@ -24,6 +24,9 @@
                         <span v-if="!update">{{user.name}}</span>
                         <el-input v-else v-model="user.name" placeholder="请输入"></el-input>
                     </el-form-item>
+                    <el-form-item label="职称：">
+                        <span>{{user.jobTitle}}</span>
+                    </el-form-item>
                     <el-form-item label="联系电话：">
                         <span v-if="!update">{{user.phone}}</span>
                         <el-input v-else v-model="user.phone" placeholder="请输入"></el-input>
