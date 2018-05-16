@@ -59,12 +59,12 @@
             <el-table-column prop="funding" label="资金"></el-table-column>
             <el-table-column prop="overhead" label="实际开支">
                 <template slot-scope="scope">
-                    <span>{{ (+props.row.overhead > 0 ? +props.row.overhead : 0).toFixed(2) }}</span>
+                    <span>{{ (+scope.row.overhead > 0 ? +scope.row.overhead : 0).toFixed(2) }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="预计开支">
                 <template slot-scope="scope">
-                    <span :class="getClass(scope.row)">{{ (+props.row.alloverhead > 0 ? +props.row.alloverhead : 0).toFixed(2) }}</span>
+                    <span :class="getClass(scope.row)">{{ (+scope.row.alloverhead > 0 ? +scope.row.alloverhead : 0).toFixed(2) }}</span>
                 </template>
             </el-table-column>
             <el-table-column prop="overflow" label="超支上限">
