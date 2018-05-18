@@ -56,7 +56,7 @@ const fileType = [
 
 app.use(koaBody())
 app.use(jwtKoa({secret}).unless({
-    path: [/\/login/, /\/register/, /^[\/]?$/, /^\/manage[/]?$/, /\/static/] //数组中的路径不需要通过jwt验证
+    path: [/\/login/, /\/register/, /^[\/]?$/, /^\/manage[/]?$/, /\/static/, /\/favicon\.ico/] //数组中的路径不需要通过jwt验证
 }))
 app.use(async(ctx, next) => {
     let param = ctx.request.body
@@ -110,7 +110,7 @@ app.use(async(ctx, next) => {
                         try {
                             io.sockets.connected[spEnum[tokenResult.id]].disconnect(true)
                         } catch(e) {
-
+                            console.log(e)
                         }
                         delete spEnum[tokenResult.id]
                     }
@@ -422,6 +422,15 @@ app.use(async(ctx, next) => {
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = 'success'
+                        var messageDate = `有新的项目通知，可在首页->通知中查看`
+                        var message = {
+                            id: result.body.insertId,
+                            uid: param.requester,
+                            data: messageDate,
+                            state: 0,
+                            occurTime: time
+                        }
+                        io.emit('hi', JSON.stringify(message))
                     } else {
                         ctx.throw(400, '添加失败')
                     }
@@ -481,9 +490,19 @@ app.use(async(ctx, next) => {
                         result = await querySQL(select)
                         if (!!result.state) {
                             ctx.body = 'success'
-                            // if (io.sockets.connected[spEnum[param.requester]]) {
-                            //     io.sockets.connected[spEnum[param.requester]].send(JSON.stringify(message))
-                            // }
+                            var messageDate = `您已被修改为${param.level}级权限用户,请刷新页面以重新获取数据`
+                            select = `insert into message values(NULL, "${param.id}", "${messageDate}", 0, "${Date.now()}", "权限修改通知")`
+                            querySQL(select)
+                            var message = {
+                                id: result.body.insertId,
+                                uid: param.requester,
+                                data: messageDate,
+                                state: 0,
+                                occurTime: time
+                            }
+                            if (io.sockets.connected[spEnum[param.id]]) {
+                                io.sockets.connected[spEnum[param.id]].send(JSON.stringify(message))
+                            }
                         } else {
                             ctx.throw(400, '修改失败')
                         }

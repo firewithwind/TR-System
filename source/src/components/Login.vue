@@ -98,6 +98,14 @@ export default {
     created() {
         this.param = query(location.href.split('?')[1])
     },
+    mounted() {
+        let users = localStorage.getItem('users')
+        if (!!users) {
+            this.checked = true
+            users = JSON.parse(users)
+            this.loginInfor = users
+        }
+    },
     methods: {
         checkInputID(input) {
             let pattrn = /[0-9a-zA-Z_]/g
@@ -134,7 +142,7 @@ export default {
                                     checked: true
                                 })
                             }
-                            let socket = createSocket('http://localhost:3000', {token: res.body.result.id})
+                            let socket = createSocket('http://localhost:3000/', {token: res.body.result.id})
                             socket.on('message', (data) => {
                                 let message = JSON.parse(data)
                                 this.$notify.info({
@@ -144,6 +152,15 @@ export default {
                                     duration: 6000
                                 })
                             })
+                            if (this.checked) {
+                                let users = {
+                                    id: this.loginInfor.id,
+                                    pwd: this.loginInfor.pwd
+                                }
+                                localStorage.setItem('users', JSON.stringify(users))
+                            } else {
+                                localStorage.setItem('users', '')
+                            }
                             this.$store.commit('setSocket', socket)
                             this.$store.commit('setUser', res.body.result)
                             this.$store.commit('setToken', res.body.token)

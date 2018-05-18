@@ -74,7 +74,7 @@ export default {
                             localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
                             token = res.body.token
                         }
-                        let socket = createSocket('http://localhost:3000', {
+                        let socket = createSocket('http://localhost:3000/', {
                             token: res.body.id
                         })
                         socket.on('message', (data) => {
