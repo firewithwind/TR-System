@@ -317,6 +317,21 @@ app.use(async(ctx, next) => {
                             id: result.body.insertId,
                             occurTime: time
                         }
+                        select = `insert into announcement values(NULL, '政策通知', '有新的政策公布了，请在<b>政策&公告</b>查看', '${time}', '/policy')`
+                        result = await querySQL(select)
+                        if (!!result.state) {
+                            var messageDate = `有新的政策公布了，请在<a href="/#/policy">政策&公告</a>查看`
+                            var message = {
+                                id: result.body.insertId,
+                                uid: param.requester,
+                                data: messageDate,
+                                state: 0,
+                                occurTime: time
+                            }
+                            io.emit('message', JSON.stringify(message))
+                        } else {
+                            ctx.throw(400, '添加失败')
+                        }
                     } else {
                         ctx.throw(400, '创建失败')
                     }
@@ -354,6 +369,18 @@ app.use(async(ctx, next) => {
                     result = await querySQL(select)
                     if (!!result.state) {
                         ctx.body = 'success'
+                        let time = Date.now()
+                        select = `insert into announcement values(NULL, '政策通知', '<b>${param.title}</b>政策已被修改，请及时查看', '${time}', '/policy')`
+                        result = querySQL(select)
+                        var messageDate = `<a href="/#/policy/detail?id=${param.id}">${param.title}</a>政策已被修改，请及时查看`
+                        var message = {
+                            id: '',
+                            uid: param.requester,
+                            data: messageDate,
+                            state: 0,
+                            occurTime: time
+                        }
+                        io.emit('message', JSON.stringify(message))
                     } else {
                         ctx.throw(400, '更新失败')
                     }
@@ -430,7 +457,7 @@ app.use(async(ctx, next) => {
                             state: 0,
                             occurTime: time
                         }
-                        io.emit('hi', JSON.stringify(message))
+                        io.emit('message', JSON.stringify(message))
                     } else {
                         ctx.throw(400, '添加失败')
                     }
@@ -443,6 +470,18 @@ app.use(async(ctx, next) => {
                 result = await querySQL(select)
                 if (!!result.state) {
                     ctx.body = 'success'
+                    let time = Date.now()
+                    let select = `insert into announcement values(NULL, '项目通知', '描述为<b>${param.description}</b>的项目已被修改，请相关人员及时查看', '${time}', '/project')`
+                    querySQL(select)
+                    var messageDate = `描述为<b>${param.description}</b>的项目已被修改，请相关人员及时查看`
+                    var message = {
+                        id: result.body.insertId,
+                        uid: param.requester,
+                        data: messageDate,
+                        state: 0,
+                        occurTime: time
+                    }
+                    io.emit('message', JSON.stringify(message))
                 } else {
                     ctx.throw(400, '更新失败')
                 }
