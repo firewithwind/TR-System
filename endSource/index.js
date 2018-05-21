@@ -1149,7 +1149,7 @@ app.use(async(ctx, next) => {
                             right join user u on req.requester = u.id
                             where`
                 if (!!param.id) {
-                    select += ` u.id = "${param.id}" and`
+                    select += ` (u.id = "${param.id}" or u.name = "${param.id}") and`
                 }
                 if (!!param.project) {
                     select += ` pro.id = ${param.project} and`

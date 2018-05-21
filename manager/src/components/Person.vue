@@ -22,9 +22,9 @@
             <el-table-column prop="id" label="用户ID"></el-table-column>
             <el-table-column prop="name" label="姓名"></el-table-column>
             <el-table-column prop="jobTitle" label="职称"></el-table-column>
-            <el-table-column prop="phone" label="电话"></el-table-column>
-            <el-table-column prop="Email" label="邮箱"></el-table-column>
-            <el-table-column prop="laboratory" label="所在研究室"></el-table-column>
+            <el-table-column prop="phone" label="电话" width="120"></el-table-column>
+            <el-table-column prop="Email" label="邮箱" width="180"></el-table-column>
+            <el-table-column prop="laboratory" label="所在研究室" width="210"></el-table-column>
             <el-table-column prop="level" label="权限等级"></el-table-column>
             <el-table-column label="操作">
                 <template slot-scope="scope">
