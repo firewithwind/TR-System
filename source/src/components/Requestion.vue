@@ -102,7 +102,7 @@
                 </tr>
                 <tr>
                     <td class="label">计入项目</td>
-                    <td class="value">{{requestion.project}}</td>
+                    <td class="value">{{requestion.title}}</td>
                     <td class="label">交通工具</td>
                     <td class="value">{{feeTypesEnum[requestion.way]}}</td>
                 </tr>

@@ -6,7 +6,8 @@
                     <use xlink:href="#icon-print"></use>
                 </svg>
                 <span v-if="requestion.state >= 4" class="exportFinanceReim" @click="exportFinanceReim">下载财务审批报销单</span>
-                <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark&&isSelf" class="addReim" @click="showDialog1Visible">添加条目</span></p>
+                <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark&&isSelf" class="addReim" @click="showDialog1Visible">添加条目</span>
+            </p>
             <el-table
                 class="reimbursement-wrapper"
                 :data="reims"
@@ -132,7 +133,7 @@
                         </el-option-group>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="起点">
+                <el-form-item v-if="newReim.type>=30&&newReim.type<=39" label="起点">
                     <el-input v-model="newReim.startAddress" placeholder="输入起点"></el-input>
                 </el-form-item>
                 <el-form-item label="开始日期">
@@ -141,7 +142,7 @@
                 <el-form-item label="开始时间">
                     <el-time-picker v-model="newReim.startTime" placeholder="输入开始时间"></el-time-picker>
                 </el-form-item>
-                <el-form-item label="终点">
+                <el-form-item v-if="newReim.type>=30&&newReim.type<=39" label="终点">
                     <el-input v-model="newReim.endAddress" placeholder="输入终点"></el-input>
                 </el-form-item>
                 <el-form-item label="结束日期">
@@ -242,7 +243,6 @@ export default {
             remarkResult: 0,
             remarkReason: '',
             dialog1Visible: false,
-            dialog2Visible: false,
             dialogImageUrl: '',
             dialogPicture: false
         }

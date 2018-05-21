@@ -290,10 +290,10 @@ export default {
                     })
                 } else {
                     let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
-                    rem.startDate = new Date(rem.startDate).getTime()
-                    rem.startTime = new Date(rem.startTime).getTime()
-                    rem.endDate = new Date(rem.startDate).getTime()
-                    rem.endTime = new Date(rem.endTime).getTime()
+                    rem.startDate = new Date(rem.startDate).getTime() || ''
+                    rem.startTime = new Date(rem.startTime).getTime() || ''
+                    rem.endDate = new Date(rem.startDate).getTime() || ''
+                    rem.endTime = new Date(rem.endTime).getTime() || ''
                     this.$request
                         .post('/test/addReimbursement')
                         .set('Authorization', `Bearer ${token}`)

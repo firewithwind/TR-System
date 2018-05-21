@@ -14,7 +14,11 @@
             </el-form-item>
             <el-form-item label="所属项目">
                 <el-select v-model="param.project" clearable>
-                    <el-option label="重点项目" value="1">
+                    <el-option
+                      v-for="item in projects"
+                      :key="item.id"
+                      :label="item.title"
+                      :value="item.id">
                     </el-option>
                 </el-select>
             </el-form-item>
@@ -31,7 +35,7 @@
             </el-form-item>
             <el-button class="find" type="primary" @click="getFindRequestion(1)">查询</el-button>
         </el-form>
-        <p class="split">提示：将默认搜索用户自己的所有申请单</p>
+        <p class="split">提示：将默认搜索用户自己的所有申请单，查询全部请在用户中输入all</p>
         <el-table :data="requestions">
             <el-table-column
                 type="index"
@@ -97,11 +101,31 @@ export default {
                 offset: 0,
                 count: 10
             },
-            acount: 0
+            acount: 0,
+            projects: []
         }
+    },
+    created() {
+        this.getProjects()
     },
     methods: {
         formatDate,
+        getProjects() {
+            let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
+            this.$request
+                .post('/test/getProjects')
+                .set('Authorization', `Bearer ${token}`)
+                .end((err, res) => {
+                    if (!!err) {
+                        this.$message({
+                            type: 'error',
+                            message: err.response.text
+                        })
+                    } else {
+                        this.projects = res.body
+                    }
+                })
+        },
         getFindRequestion(cpage) {
             if (this.daterange && !!this.daterange.length) {
                 this.param.startDate = new Date(this.daterange[0]).getTime() + ''
