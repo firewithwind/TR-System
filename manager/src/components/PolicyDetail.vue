@@ -86,9 +86,13 @@ export default {
     methods: {
         formatDate,
         cancel() {
-            this.editor.txt.html(this.policy.data)
-            this.editoring = false
-            this.policy.title = this.oldTitle
+            if (!!this.policy.id) {
+                this.editor.txt.html(this.policy.data)
+                this.editoring = false
+                this.policy.title = this.oldTitle
+            } else {
+                this.$router.go(-1)
+            }
         },
         getPolicyFiles(id) {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
