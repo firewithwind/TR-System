@@ -24,12 +24,12 @@
                             <span>{{ props.row.title }}</span>
                         </el-form-item>
                         <el-form-item label="项目描述">
-                            <span v-if="!update">{{ props.row.description }}</span>
-                            <el-input v-else v-model="currentProject.description"></el-input>
+                            <span v-if="!props.row.update">{{ props.row.description }}</span>
+                            <el-input v-else v-model="props.row.description"></el-input>
                         </el-form-item>
                         <el-form-item label="资金">
-                            <span v-if="!update">{{ (+props.row.funding).toFixed(2) }}</span>
-                            <el-input v-else v-model="currentProject.funding"></el-input>
+                            <span v-if="!props.row.update">{{ (+props.row.funding).toFixed(2) }}</span>
+                            <el-input v-else v-model="props.row.funding"></el-input>
                         </el-form-item>
                         <el-form-item label="实际开支">
                             <span>{{ (+props.row.overhead > 0 ? +props.row.overhead : 0).toFixed(2) }}</span>
@@ -38,8 +38,8 @@
                             <span>{{ (+props.row.alloverhead > 0 ? +props.row.alloverhead : 0).toFixed(2) }}</span>
                         </el-form-item>
                         <el-form-item label="超支上限">
-                            <span v-if="!update">{{ props.row.overflow }}%</span>
-                            <el-input v-else v-model="currentProject.overflow">
+                            <span v-if="!props.row.update">{{ props.row.overflow }}%</span>
+                            <el-input v-else v-model="props.row.overflow">
                                 <template slot="append">%</template>
                             </el-input>
                         </el-form-item>
@@ -47,9 +47,9 @@
                             <span>{{ formatDate(props.row.occurTime) }}</span>
                         </el-form-item>
                         <el-form-item>
-                            <el-button v-if="!update&&hasACC" type="text" @click="updateProject(props.row)">修改</el-button>
-                            <el-button v-if="update" type="text" @click="updateProject(props.row, props.$index)">提交</el-button>
-                            <el-button v-if="update" type="text" @click="update=false">取消</el-button>
+                            <el-button v-if="!props.row.update&&hasACC" type="text" @click="updateProject(props.row, props.$index)">修改</el-button>
+                            <el-button v-if="props.row.update" type="text" @click="updateProject(props.row, props.$index)">提交</el-button>
+                            <el-button v-if="props.row.update" type="text" @click="cancelUpdateProject(props.row, props.$index)">取消</el-button>
                         </el-form-item>
                     </el-form>
                 </template>
@@ -135,12 +135,7 @@ export default {
                 funding: '',
                 overflow: ''
             },
-            newProject: {
-                title: '',
-                funding: '',
-                description: '',
-                overflow: ''
-            },
+            newProject: [],
             update: false,
             dialogVisible: false
         }
@@ -204,11 +199,11 @@ export default {
         },
         updateProject(row, index) {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))
-            if (this.update) {
+            if (row.update) {
                 this.$request
                     .post('/test/updateProject')
                     .set('Authorization', `Bearer ${token}`)
-                    .send(this.currentProject)
+                    .send({...row})
                     .end((err, res) => {
                         if (!!err) {
                             this.$message({
@@ -220,14 +215,19 @@ export default {
                                 type: 'success',
                                 message: '修改成功'
                             })
-                            this.projects[index] = this.currentProject
-                            this.update = false
+                            row.update = false
                         }
                     })
             } else {
-                this.currentProject = {...row}
-                this.update = true
+                this.currentProject[index] = {...row}
+                row.update = true
             }
+        },
+        cancelUpdateProject(row, index) {
+            this.projects[index].description = this.currentProject[index].description
+            this.projects[index].funding = this.currentProject[index].funding
+            this.projects[index].overflow = this.currentProject[index].overflow
+            this.projects[index].update = false
         },
         getClass(row) {
             if (+row.alloverhead >= +row.funding * (1 + row.overflow / 100) - 100) {
@@ -251,7 +251,12 @@ export default {
                             message: err.response.text
                         })
                     } else {
-                        this.projects = res.body.result
+                        this.projects = res.body.result.map((pro) => {
+                            return {
+                                ...pro,
+                                update: false
+                            }
+                        })
                         this.total = res.body.total
                     }
                 })

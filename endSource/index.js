@@ -1013,31 +1013,33 @@ app.use(async(ctx, next) => {
                 let key = 0
                 select = `select r.*, u.name, u.level, p.title
                 from user u right join requestion r on r.requester=u.id
-                right join project p on r.project = p.id where `
+                right join project p on r.project = p.id where`
                 if (!!param.id) {
-                    select += `r.id=${param.id} and`
+                    select += ` r.id=${param.id} and `
                     key = 1
                 }
                 if (!!param.name) {
-                    select += ` (u.id="${param.name}" or u.name="${param.name}") and`
+                    if (param.name !== "all") {
+                        select += ` (u.id="${param.name}" or u.name="${param.name}") and `
+                    }
                     key = 1
                 }
                 if (!!param.state) {
-                    select += ` r.state=${param.state} and`
+                    select += ` r.state=${param.state} and `
                     key = 1
                 }
                 if (!!param.project) {
-                    select += ` r.project=${param.project} and`
+                    select += ` r.project=${param.project} and `
                     key = 1
                 }
                 if (!!param.startDate) {
-                    select += ` occurTime >= "${param.startDate}" and occurTime <= "${param.endDate}" and`
+                    select += ` occurTime >= "${param.startDate}" and occurTime <= "${param.endDate}" and `
                     key = 1
                 }
                 if (!key) {
-                    select += `r.requester="${user}"`
+                    select += ` r.requester="${user}"`
                 } else {
-                    select = select.slice(0, -4)
+                    select = select.slice(0, -5)
                 }
                 let sitem = await querySQL(select.replace('r.*, u.name, u.level, p.title', 'count(*)'))
                 select += ` order by r.occurTime desc limit ${limit.offset}, ${limit.count}`
