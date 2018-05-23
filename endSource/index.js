@@ -87,7 +87,7 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, '密码错误')
                 } else {
                         select = `select id, name, phone, Email, level, avatar, laboratory
-                        from user where id = "${param.id}" or phone = "${param.id}" and pwd = "${param.pwd}"`
+                        from user where (id = "${param.id}" or phone = "${param.id}") and pwd = "${param.pwd}"`
                         result = await querySQL(select)
                         if (!result.state) {
                             ctx.throw(400, result.msg)

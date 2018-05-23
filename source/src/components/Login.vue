@@ -12,7 +12,7 @@
                 <svg class="icon" aria-hidden="true">
                     <use xlink:href="#icon-icon-"></use>
                 </svg>
-                <input v-model="loginInfor.pwd" type="password" placeholder="输入密码">
+                <input v-model="loginInfor.pwd" type="password" placeholder="输入密码" @keydown.enter="handlelogin">
             </div>
             <div class="help">
                 <el-checkbox v-model="checked" class="check">记住密码</el-checkbox>
@@ -61,7 +61,7 @@
                 <span class="label">邮箱</span>
                 <input v-model="registerInfor.Email" placeholder="输入邮箱地址">
             </div>
-            <div class="laboratory">
+            <div class="input-wrapper">
                 <span class="label">研究室</span>
                 <input v-model="registerInfor.laboratory" placeholder="输入所在研究室">
             </div>
@@ -72,7 +72,7 @@
     </div>
 </template>
 <script>
-import {createSocket, query} from '@/utils'
+import {createSocket, query, md} from '@/utils'
 export default {
     data() {
         return {
@@ -127,7 +127,10 @@ export default {
             } else {
                 this.$request
                     .post('/test/login')
-                    .send(this.loginInfor)
+                    .send({
+                        ...this.loginInfor,
+                        pwd: md(this.loginInfor.pwd)
+                    })
                     .end((err, res) => {
                         if (!!err) {
                             this.$message({
@@ -189,13 +192,15 @@ export default {
             } else {
                 this.$request
                     .post('/test/register')
-                    .send(this.registerInfor)
+                    .send({
+                        ...this.registerInfor,
+                        pwd: md(this.registerInfor.pwd)
+                    })
                     .end((err, res) => {
                         if (!!err) {
-                            console.log(err)
                             this.$message({
                                 type: 'error',
-                                message: err.status + ': ' + err.response.text
+                                message: err.response.text
                             })
                         } else {
                             this.$message({
@@ -278,17 +283,6 @@ export default {
                 text-align: right
                 font-size: .13rem
                 color: #606266
-        .laboratory
-            margin-top: .05rem
-            text-align: left
-            color: #606266
-            .label
-                margin-right: .05rem
-                font-size: .13rem
-            input
-                background: none
-                &::placeholder
-                    color: #909399
         .help
             margin-top: .1rem
             font-size: .12rem

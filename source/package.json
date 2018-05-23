@@ -13,6 +13,7 @@
   "dependencies": {
     "echarts": "^4.0.4",
     "element-ui": "^2.2.1",
+    "md5": "^2.2.1",
     "socket.io-client": "^2.1.0",
     "superagent": "^3.8.2",
     "vue": "^2.5.2",

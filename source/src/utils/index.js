@@ -1,5 +1,6 @@
 const qs = require('querystring')
 const io = require('socket.io-client')
+const md5 = require('md5')
 
 function tofixed(data) {
     return data.toString().length > 1 ? '' + data : '0' + data
@@ -32,6 +33,10 @@ export function createSocket(url, query) {
         query: query
     })
     return socket
+}
+
+export function md(msg) {
+    return md5(msg)
 }
 
 // 浮点数运算

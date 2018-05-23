@@ -5,7 +5,11 @@
             <el-table-column type="index"></el-table-column>
             <el-table-column prop="id" label="编号"></el-table-column>
             <el-table-column prop="title" label="标题"></el-table-column>
-            <el-table-column prop="occurTime" label="创建时间"></el-table-column>
+            <el-table-column prop="occurTime" label="创建时间">
+                <template slot-scope="scope">
+                    {{formatDate(scope.row.occurTime)}}
+                </template>
+            </el-table-column>
             <el-table-column label="操作">
                 <template slot-scope="scope">
                     <el-button type="text" @click="goForDetail(scope.row.id)">查看详情</el-button>
@@ -21,6 +25,7 @@
     </div>
 </template>
 <script>
+import {formatDate} from '@/utils'
 export default {
     data() {
         return {
@@ -53,6 +58,7 @@ export default {
             })
     },
     methods: {
+        formatDate,
         goForDetail(id) {
             this.$router.push('/manage/policy/detail?id=' + id)
         },
