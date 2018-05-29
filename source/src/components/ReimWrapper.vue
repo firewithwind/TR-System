@@ -23,7 +23,8 @@
                     </template>
                 </el-table-column>
                 <el-table-column
-                    label="开始日期">
+                    label="开始日期"
+                    width="95">
                     <template slot-scope="scope">
                         {{formatDate(scope.row.startDate)}}
                     </template>
@@ -39,7 +40,8 @@
                     label="起点">
                 </el-table-column>
                 <el-table-column
-                    label="结束日期">
+                    label="结束日期"
+                    width="95">
                     <template slot-scope="scope">
                         {{formatDate(scope.row.endDate)}}
                     </template>

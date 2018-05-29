@@ -185,7 +185,7 @@ export default {
             let result
             if (params.seriesIndex === 0) {
                 result = this.reims.filter((reim) => {
-                    let date = formatDate(reim.startDate).split('/')
+                    let date = formatDate(reim.startDate || reim.reqStart).split('/')
                     if (filterParam.length === 2) {
                         if (date[0] === filterParam[0] && date[1] === filterParam[1]) {
                             return true
@@ -200,7 +200,7 @@ export default {
                     if (reim.state < 4) {
                         return false
                     }
-                    let date = formatDate(reim.startDate).split('/')
+                    let date = formatDate(reim.startDate || reim.reqStart).split('/')
                     if (filterParam.length === 2) {
                         if (date[0] === filterParam[0] && date[1] === filterParam[1]) {
                             return true

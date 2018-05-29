@@ -1143,7 +1143,7 @@ app.use(async(ctx, next) => {
                 }
                 break
             case /\/getStatisticDate/.test(ctx.url):
-                select = `select reim.*, req.id as rid, req.state, pro.id as pid, pro.title, u.name
+                select = `select reim.*, req.id as rid, req.state, req.startTime as reqStart, req.endTime as reqEnd, pro.id as pid, pro.title, u.name
                             from requestion req right join reimbursement reim on req.id = reim.requestion
                             right join project pro on pro.id = reim.project
                             right join user u on req.requester = u.id
@@ -1158,7 +1158,7 @@ app.use(async(ctx, next) => {
                     select += ` u.laboratory = "${param.laboratory}" and`
                 }
                 if (!!param.start && !!param.end) {
-                    select += ` reim.startDate >= ${param.start} and reim.endDate <= ${param.end}`
+                    select += ` req.startTime >= ${param.start} and req.endTime <= ${param.end}`
                 } else {
                     ctx.throw(400, 'bad params for search')
                 }

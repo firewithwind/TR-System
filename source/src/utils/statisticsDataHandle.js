@@ -49,7 +49,7 @@ export function setPersonMonthsChartsData(data, l) {
     let result = new Array(l.length).fill(0)
     let allResult = new Array(l.length).fill(0)
     data.forEach((item) => {
-        let date = formatDate(item.startDate).split('/')
+        let date = formatDate(item.startDate || item.reqStart).split('/')
         let position = l.indexOf(date[0] + '-' + date[1])
         if (position !== -1) {
             allResult[position] = resolveFloat(allResult[position], Number(item.money))
