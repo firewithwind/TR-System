@@ -218,9 +218,58 @@ app.use(async(ctx, next) => {
                     ctx.throw(400, 'Not Found')
                 }
                 break
+            case /\/getDics/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `select * from dic`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body
+                    } else {
+                        ctx.throw(400, '获取信息失败')
+                    }
+                } else {
+                    ctx.throw(400, '没有权限')
+                }
+                break
+            case /\/deleteDic/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `delete from dic where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '删除失败')
+                    }
+                }
+                break
+            case /\/updateDic/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `update dic set value = ${param.value}, label="${param.label}" where id = ${param.id}`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = 'success'
+                    } else {
+                        ctx.throw(400, '修改失败')
+                    }
+                } else {
+                    ctx.throw(400, '没有权限')
+                }
+                break
+            case /\/insertDic/.test(ctx.url):
+                if (tokenResult.level >= 2) {
+                    select = `insert into dic values(NULL, ${param.value}, "${param.label}")`
+                    result = await querySQL(select)
+                    if (!!result.state) {
+                        ctx.body = result.body.insertId
+                    } else {
+                        ctx.throw(400, '添加失败')
+                    }
+                } else {
+                    ctx.throw(400, '没有权限')
+                }
+                break
             case /\/getPolicys/.test(ctx.url):
                 if (tokenResult.level >= 2) {
-
                     select = `select count(*) from policy limit ${param.offset}, ${param.limit}`
                     result = await querySQL(select)
                     if (!!result.state) {

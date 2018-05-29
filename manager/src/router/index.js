@@ -5,6 +5,7 @@ import Project from '@/components/Project'
 import Person from '@/components/Person'
 import Policy from '@/components/Policy'
 import PolicyDetail from '@/components/PolicyDetail'
+import Dictionary from '@/components/Dictionary'
 
 Vue.use(Router)
 
@@ -34,6 +35,10 @@ export default new Router({
             {
                 path: 'policy/detail',
                 component: PolicyDetail
+            },
+            {
+                path: 'dictionary',
+                component: Dictionary
             }
         ]
     }

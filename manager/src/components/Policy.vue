@@ -21,7 +21,7 @@
             :page-size="20"
             :total="total">
         </el-pagination>
-        <el-button class="add-policy" type="primary" size="mini" @click="goForAdd">添加</el-button>
+        <el-button class="add-policy" type="primary" @click="goForAdd">添加</el-button>
     </div>
 </template>
 <script>
