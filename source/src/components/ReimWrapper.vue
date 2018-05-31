@@ -5,6 +5,7 @@
                 <svg v-if="requestion.state>=4" class="icon" aria-hidden="true" @click="exportReim">
                     <use xlink:href="#icon-print"></use>
                 </svg>
+                <span v-if="requestion.state >= 4" class="exportFinanceReim" @click="exportCopy">下载发票粘贴联</span>
                 <span v-if="requestion.state >= 4" class="exportFinanceReim" @click="exportFinanceReim">下载财务审批报销单</span>
                 <span v-if="requestion.state>=2&&requestion.state<4&&!isRemark&&isSelf" class="addReim" @click="showDialog1Visible">添加条目</span>
             </p>
@@ -294,6 +295,9 @@ export default {
                         window.open(res.text)
                     }
                 })
+        },
+        exportCopy() {
+            window.open('http://localhost:3000/static/copy.pdf')
         },
         exportFinanceReim() {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))

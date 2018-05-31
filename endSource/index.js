@@ -138,7 +138,7 @@ app.use(async(ctx, next) => {
                 break
             case /\/getUserInfor/.test(ctx.url):
                 if (!!tokenResult.id) {
-                    select = `select id, name, phone, Email, level, avatar, laboratory
+                    select = `select id, name, phone, Email, level, avatar, laboratory, jobTitle
                         from user where id = "${tokenResult.id}"`
                     result = await querySQL(select)
                     if (!!result.state) {
@@ -1061,8 +1061,8 @@ app.use(async(ctx, next) => {
                 let user = param.user
                 let key = 0
                 select = `select r.*, u.name, u.level, p.title
-                from user u right join requestion r on r.requester=u.id
-                right join project p on r.project = p.id where`
+                from requestion r left join user u on r.requester=u.id
+                left join project p on r.project = p.id where`
                 if (!!param.id) {
                     select += ` r.id=${param.id} and `
                     key = 1

@@ -264,5 +264,5 @@ export default {
         text-align: left
     #editor
         border: 1px solid #F2F6FC
-        min-height: 3rem
+        min-height: 4rem
 </style>

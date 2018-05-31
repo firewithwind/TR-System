@@ -97,6 +97,7 @@ export default {
         line-height: .2rem
         text-align: left
         border-top: 1px solid #F2F6FC
+        overflow-x: auto
         table
             border-left: 1px solid #DCDFE6
             border-top: 1px solid #DCDFE6

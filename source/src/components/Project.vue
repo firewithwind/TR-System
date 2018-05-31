@@ -39,7 +39,7 @@
                                     <span>{{ (+props.row.overhead > 0 ? +props.row.overhead : 0).toFixed(2) }}</span>
                                 </el-form-item>
                                 <el-form-item label="预计开支">
-                                    <span>{{ (+props.row.alloverhead > 0 ? +props.row.alloverhead : 0).toFixed(2) }}</span>
+                                    <span :class="getClass(props.row)">{{ (+props.row.alloverhead > 0 ? +props.row.alloverhead : 0).toFixed(2) }}</span>
                                 </el-form-item>
                                 <el-form-item label="超支上限">
                                     <span v-if="!props.row.update">{{ props.row.overflow }}</span>
@@ -151,7 +151,7 @@ export default {
             this.projects[index].update = false
         },
         getClass(row) {
-            if (+row.alloverhead >= +row.funding * (1 + row.overflow) - 100) {
+            if (+row.alloverhead >= +row.funding * (1 + row.overflow / 100) - 100) {
                 return 'danger'
             }
             return ''
