@@ -297,7 +297,7 @@ export default {
                 })
         },
         exportCopy() {
-            window.open('http://localhost:3000/static/copy.pdf')
+            window.open(`${location.origin}/static/copy.pdf`)
         },
         exportFinanceReim() {
             let token = this.$store.state.token || (localStorage.getItem('token') && localStorage.getItem('token').slice(0, -5))

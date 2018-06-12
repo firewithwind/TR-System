@@ -145,7 +145,7 @@ export default {
                                     checked: true
                                 })
                             }
-                            let socket = createSocket('http://localhost:3000/', {token: res.body.result.id})
+                            let socket = createSocket(`${location.origin}`, {token: res.body.result.id})
                             socket.on('message', (data) => {
                                 let message = JSON.parse(data)
                                 this.$notify.info({

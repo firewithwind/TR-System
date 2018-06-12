@@ -16,7 +16,8 @@
                 <el-menu-item index="/statistics">数据统计</el-menu-item>
                 <el-menu-item class="user-info" index="/userInfor">
                     <el-badge>
-                        <img class="logo" :src="$store.state.user&&$store.state.user.avatar||'http://localhost:3000/static/avatar/timg.jpeg'">
+                        <!-- <img class="logo" :src="$store.state.user&&$store.state.user.avatar||'/static/avatar/timg.jpeg'"> -->
+                        <img class="logo" :src="$store.state.user&&$store.state.user.avatar||'/test/static/avatar/timg.jpeg'">
                     </el-badge>
                     <span>{{$store.state.user&&$store.state.user.name}}</span>
                     <span v-if="!$store.state.user||!$store.state.user.name">请登入</span>
@@ -74,6 +75,7 @@ export default {
                             localStorage.setItem('token', res.body.token + Math.random().toFixed(3))
                             token = res.body.token
                         }
+                        // let socket = createSocket('http://10.245.146.144:3000/', {
                         let socket = createSocket('http://localhost:3000/', {
                             token: res.body.id
                         })

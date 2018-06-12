@@ -58,7 +58,8 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../manage'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: 'http://localhost:3000/static/manage',
+    assetsPublicPath: '/static/manage',
+    // assetsPublicPath: 'http://10.245.146.144:3000/static/manage',
 
     /**
      * Source Maps
