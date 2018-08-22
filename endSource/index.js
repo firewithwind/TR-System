@@ -1274,7 +1274,7 @@ app.use(async(ctx, next) => {
 
 app.use(static(__dirname, 'static'))
 
-let server = app.listen(3000, () => {
+let server = app.listen(8080, () => {
     console.log('server listening 3000...')
 })
 

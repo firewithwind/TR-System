@@ -34,7 +34,7 @@
 <script>
 import {createSocket} from '@/utils'
 export default {
-  name: 'App',
+    name: 'App',
     data() {
         return {
             activeIndex: 'index'
