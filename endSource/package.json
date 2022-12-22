@@ -4,7 +4,7 @@
     "description": "the server of the TR-System",
     "dependencies": {
         "busboy": "^0.2.14",
-        "jsonwebtoken": "^8.2.1",
+        "jsonwebtoken": "^9.0.0",
         "koa": "^2.5.0",
         "koa-body": "^2.5.0",
         "koa-jwt": "^3.3.1",
